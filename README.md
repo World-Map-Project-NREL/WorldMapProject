@@ -1,2 +1,0 @@
-"# XLWings_ModuleTempTool" 
-"# WorldMapProject" 
