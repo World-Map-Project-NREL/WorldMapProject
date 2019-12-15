@@ -173,6 +173,14 @@ def createPickleFiles( currentDirectory ):
             os.unlink(os.path.join(root, f))
         for d in dirs:
             shutil.rmtree(os.path.join(root, d))
+            
+            
+    #Create the tuple of series and raw data        
+            
+            
+            
+            
+            
     #Pull out the file names from the file path(.csv files) and return a list 
     # of file names without .csv extension
     fileNames = rawDataImport.filesNameListCSV_EPW( path )

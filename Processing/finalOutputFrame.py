@@ -134,7 +134,7 @@ class finalOutputFrame:
         
         level_1_df()
         
-        Create level 1 processed datafraem and store it into a .pickle file. 
+        Create level 1 processed dataframe and store it into a .pickle file. 
         The level 1 processing will be a large computation calculating all site 
         locations withing the TMY3, CWEC and IWEC datasets.
         The results of computation will be stored as a pandas dataframe .pickle   
