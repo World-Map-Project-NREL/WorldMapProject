@@ -17,6 +17,7 @@ import glob
 import os 
 import xlwings as xw
 import pvlib
+import pickle
 
 #For XLwings ref
 from Processing.cleanRawOutput import cleanRawOutput
@@ -282,7 +283,7 @@ class finalOutputFrame:
             # PVlib requires the latitude tilt to always be positve for its irradiance calculations
             surface_tilt = abs(latitude)        
             # Import the raw dataframe of the individual location to clean and process
-            raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_RawData\\' + fileNames[i])
+            locationData , raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_RawData\\' + fileNames[i])
             level_1_df = firstClean.cleanedFrame( raw_df , hoursAheadOrBehind , longitude )
             ################  
             # Calculate the Solar Position
@@ -703,8 +704,10 @@ class finalOutputFrame:
                                           'Cell Temperature(22x_concentrator_tracker)':'Cell Temperature(22x_concentrator_tracker)(C)', 
                                           'Module Temperature(22x_concentrator_tracker)':'Module Temperature(22x_concentrator_tracker)(C)'
                                           }, inplace = True)
-            #Store the level 1 processed Data into a pickle
-            level_1_df.to_pickle( currentDirectory + '\Pandas_Pickle_DataFrames\Pickle_Level1' +'\\'+ fileNames[i] )
+            #Store the level 1 processed Data into the tuple as a pickle file
+            level1_tuple = ( locationData , level_1_df )
+            with open(currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[i], 'wb') as f:
+                pickle.dump(level1_tuple, f)
             #Output to the user how many files have been complete
             wb.sheets[mySheet].range(67,4).value = i + 1
             ################  
@@ -806,7 +809,14 @@ class finalOutputFrame:
         summaryListsAs_df["FilePath"] = pd.DataFrame(filePath_List)
         #Data Source list of each data set.  TMY3 or CWEC or IWEC
         summaryListsAs_df["Data Source"] = pd.DataFrame( dataSource_List )
-        # When organizing files the directory saves files alphabetically causing index errors
+ 
+
+###################################################################################
+
+
+
+
+       # When organizing files the directory saves files alphabetically causing index errors
         # Correct the indexing error with the summary sheet and file path list to associate correctly
         unique_SummaryStats = summaryListsAs_df['FilePath'].tolist()
         #Use the helper method to find the unique identifiers
@@ -920,6 +930,6 @@ class finalOutputFrame:
 
 
 
-#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\SolarModuleTempMapandWeatherProject_1.0.0'
+#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 #i = 5
 
