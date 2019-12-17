@@ -520,7 +520,7 @@ class finalOutputFrame:
                                                                                                     .64 , 
                                                                                                     x['Module Temperature(open_rack_cell_glassback)'] ,
                                                                                                     60 ,
-                                                                                                    1.42 ), 
+                                                                                                    1.41 ), 
                                                                                                 axis=1)
             sumOfDegEnv = level_1_df['Rate of Degradation'].sum(axis = 0, skipna = True)
             sumOfDegEnv_List.append(sumOfDegEnv)

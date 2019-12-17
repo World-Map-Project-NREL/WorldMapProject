@@ -22,7 +22,10 @@ import glob
 import pandas as pd
 import os 
 import io
+import pickle
+
 from Processing.cleanRawOutput  import cleanRawOutput
+#from cleanRawOutput  import cleanRawOutput
 
 try:
     # python 2 compatibility
@@ -35,13 +38,13 @@ class rawDataImport:
 
     
     
-    def filesNameListCSV_EPW( path ):
+    def rawFilesNamesList( path ):
         '''
         HELPER METHOD
         
-        filesNameListCSV()
+        rawFilesNamesList()
         
-        Pull out the file name from the file path and return a list of file names
+        Create a list of all the raw data file names
         
         @param path       -String, path to the folder with the files
         
@@ -93,9 +96,9 @@ class rawDataImport:
         
         Rename and clean a csv dataframe (raw data)
         
-         @param df            -DataFrame, frame of raw data from csv file, uncleaned
+        @param df            -DataFrame, frame of raw data from csv file, uncleaned
         
-         @return df           -DataFrame, cleaned and renamed frame                  
+        @return df           -DataFrame, cleaned and renamed frame                  
         '''     
         #Rename the columns of the frame
         df.columns = ['Date (MM/DD/YYYY)', 
@@ -173,52 +176,68 @@ class rawDataImport:
                       'Liquid percipitation depth flag (uncertainty)',
                       'Present Weather']
         return df
-    
 
     
-    def filesToDataFrame( path ):
+    
+    def rawDataToTuple( path ):
         '''
-        HELPER METHOD
+        EXECUTION METHOD
         
         filesToDataFrame()
         
-        Put both csv and epw hourly data files as dataframes,  At this point there will
-        be no difference between csv and epw files since they are now pandas dataframes
+        Create tuples from all the raw data (CSV and EPW files).  
+        Tuple will contain site location data and hourly weather metadata saved 
+        as a pickle file.
+        ( series:location data , dataframe: metadata)
         
-         @param path            -String, path of the folder where the raw data .csv files 
-                                         are located
+        @param path            -String, current working directory
         
-         @return dataFramelist  -List, List of Dataframes containing semi cleaned frames.  
-                                     *Note: the first row of the datafraemw will not be accessed
-                                     The first line of data will be saved in a different list with 
-                                     the same index                   
+        @return void create pickle files containing tuple of raw TMY3 data               
         '''        
         allCsvFiles = glob.glob(path + '\Python_RawData_Combined' + "/*.csv")
         allEpwFiles = glob.glob(path + '\Python_RawData_Combined' + "/*.epw")
-        dataFrameCsvlist = [] # Create a list to hold all the csv dataframes
-        dataFrameEpwlist = [] # Create a list to hold all the epw dataframes
-        #Create a list of dataframes for csv files
+        tupleList = []
+
+        # For loop to make all CSV files into tuples   
         for i in range( 0 , len( allCsvFiles ) ):  
-            # (access the file, skip the first 1 rows)
             csv_df = pd.read_csv(allCsvFiles[i], skiprows= 1 ,  header=0)
-            #Helper method, deltes NA data and renames column headers
+            # Filter to aggregate data together, Some CSV files contain uneeded headers
             if len(csv_df.columns) == 71:
                 csv_df = csv_df.drop(['PresWth source','PresWth uncert (code)'], axis=1)
+                
             csv_df = rawDataImport.RenameFrame(csv_df)
-            dataFrameCsvlist.append(csv_df) 
-        #Create a list of dataframes for csv files
-        for i in range( 0 , len( allEpwFiles ) ):  
+            # Create location for this CSV 
+            location_df = pd.read_csv(allCsvFiles[i], skiprows= 0 , nrows= 1, header = None,
+                     names =['Site Identifier Code',
+                            'Station name',
+                            'Station State', 
+                            'Site time zone (Universal time + or -)',
+                            'Site latitude', 
+                            'Site longitude',
+                            'Site elevation (meters)',
+                            'Station country or political unit',
+                            'WMO region',
+                            'Time zone code',
+                            'Koppen-Geiger climate classification'] )
+            location_series = location_df.iloc[0]
+            # Add all the CSV tuples to the list
+            locationAllData_tuple = ( location_series , csv_df )
+            tupleList.append( locationAllData_tuple )
+            
+
+        # For loop to make all EPW files into tuples
+        for j in range( 0 , len( allEpwFiles ) ):  
             # Use helper method to convert the EPW file to a dataframe
-            epw_df = rawDataImport.read_epw_df(allEpwFiles[i] , coerce_year=None)
+            epw_df = rawDataImport.read_epw_df(allEpwFiles[j] , coerce_year=None)
             #Put the datetime objects into their own column by reseting the index
             epw_df.reset_index(inplace=True)
             #Convert the pandas time series to MM/DD/YYYY format
             epw_df['Date (MM/DD/YYYY)'] = epw_df['index'].map(lambda x: x.strftime('%m/%d/%Y'))
-            #Convert the pandas time series to "Hour(24hrs scale):Minute"   format
+            #Convert the pandas time series to "Hour(24hrs scale):Minute"
             epw_df['Time (HH:MM)'] = epw_df['index'].map(lambda x: x.strftime('%H:%M'))
             #Convert the atmospheric pressure form Pa to mbar
             epw_df['atmospheric_pressure'] = epw_df['atmospheric_pressure'].apply(lambda x: x/100)
-            #Convert the visibility to km to m
+            #Convert the visibility from km to m
             epw_df['visibility'] = epw_df['visibility'].apply(lambda x: x*1000)        
             # Drop columns that we do not need
             epw_df = epw_df.drop(['index', 
@@ -291,18 +310,104 @@ class rawDataImport:
                           'Present Weather Observations',
                           'Present Weather Codes',
                           'Snow Depth',
-                          'Days Since Last Snowfall']        
-            dataFrameEpwlist.append(epw_df) # Keep adding dataframes to the end of the list
-        #Combine both dataframe lists together
-        dataFrameCsvlist.extend(dataFrameEpwlist)
+                          'Days Since Last Snowfall']   
+            
+            #Get site location data for the EPW files     
+            epwFirstRow = rawDataImport.read_epw_firstRow(allEpwFiles[j], coerce_year=None)
+            location_df = pd.DataFrame(columns=['Site Identifier Code',
+                                            'Station name',
+                                            'Station State', 
+                                            'Site time zone (Universal time + or -)',
+                                            'Site latitude', 
+                                            'Site longitude',
+                                            'Site elevation (meters)',
+                                            'Station country or political unit',
+                                            'WMO region',
+                                            'Time zone code',
+                                            'Koppen-Geiger climate classification'])
+            location_df = location_df.append({'Site Identifier Code': '',
+                                      'Station name':epwFirstRow.get('city'),
+                                      'Station State': '',   
+                                      'Site time zone (Universal time + or -)': epwFirstRow.get('TZ'),
+                                      'Site latitude': epwFirstRow.get('latitude'), 
+                                      'Site longitude': epwFirstRow.get('longitude'),
+                                      'Site elevation (meters)': epwFirstRow.get('altitude'),
+                                      'Station country or political unit': epwFirstRow.get('country'),
+                                      'WMO region': '',
+                                      'Time zone code': '',
+                                      'Koppen-Geiger climate classification': ''
+                                    }, ignore_index=True ) 
+            
+            #Find and store the UniqueID for this site
+            uniqueID = cleanRawOutput.string_UniqueID( allEpwFiles[j] )
+            location_df['Site Identifier Code'] = uniqueID
+            # Add all the EPW tuples to the list
+            location_series = location_df.iloc[0]         
+            locationAllData_tuple = ( location_series , epw_df )
+            tupleList.append( locationAllData_tuple )
+        
+        #Name and store all the tuples as pickles in a directory
+        fileNames = rawDataImport.rawFilesNamesList( path )
+        pickleStringList = rawDataImport.pickleNameList( fileNames )
+        
+        for k in range(0 , len(pickleStringList)):
+            with open( path + \
+                '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
+                pickleStringList[k], 'wb') as f:
+                pickle.dump(tupleList[k], f)
 
-        return dataFrameCsvlist
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 
     def createPickleFiles( path ):
         '''
-        Main METHOD
+        EXECUTION METHOD
         
         createPickleFiles()
         
@@ -320,7 +425,7 @@ class rawDataImport:
         dataFrames = rawDataImport.filesToDataFrame( path ) 
         
         #Pull out the file names from the file path(.csv files) and return a list of file names without .csv extension
-        fileNames = rawDataImport.filesNameListCSV_EPW( path )
+        fileNames = rawDataImport.rawFilesNamesList( path )
         # Convert the fileNames to have a .pickle extention
         pickleStringList = rawDataImport.pickleNameList( fileNames )
         
@@ -408,8 +513,10 @@ class rawDataImport:
                                       'Time zone code': '',
                                       'Koppen-Geiger climate classification': ''
                                     }, ignore_index=True ) 
+    
+    
         uniqueID = allFilesCSV + allFilesEPW
-        uniqueID = cleanRawOutput.stringList_UniqueID_List( uniqueID)
+        uniqueID = cleanRawOutput.stringList_UniqueID_List( uniqueID )
         row1_df['Site Identifier Code'] = uniqueID
         
         return row1_df
@@ -762,3 +869,11 @@ class rawDataImport:
         data.index = idx
     
         return meta
+
+
+
+#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject'
+#path = currentDirectory
+#i = 0
+#j = 0
+#rawDataImport.filesToDataFrame( path )
