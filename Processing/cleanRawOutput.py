@@ -79,81 +79,43 @@ class cleanRawOutput:
         '167464'
         'Test'
          
-        @param listOfStrings   - List of Strings , list of strings containing 
+        param@ listOfStrings   - List of Strings , list of strings containing 
                                                         unique identifier
         @return sampleList     - List of Strings, list of filtered strings with
                                                         unique identifiers
         '''
         sampleList = []
+        #Create a list of ASCII characters to find the sample name 
         for i in range(0, len(listOfStrings)):
-            
-            sampleList.append(cleanRawOutput.string_UniqueID( listOfStrings[ i ] ) )
-              
+            #Create a list of ASCII characters from the string
+            ascii_list =[ord(c) for c in listOfStrings[i]]
+            char_list = list(listOfStrings[i])
+            count = 0 
+            # j will be the index referencing the next ASCII character
+            for j in range(0, len(ascii_list)):
+                #Filter to find a unique combination of characters and ints 
+                ###############
+                # ASCII characters for numbers 0 - 10
+                if ascii_list[j] >= 48 and ascii_list[j] <= 57:
+                    #If a number is encountered increase the counter
+                    count = count + 1
+                    # If the count is 6 "This is how many numbers in a row 
+                        #the unique identifier will be"
+                    if count == 3:
+                        # Create a string of the unique identifier
+                        sampleList.append( char_list[ j - 2 ] +
+                                           char_list[ j - 1 ] + 
+                                           char_list[ j ]     + 
+                                           char_list[ j + 1 ] + 
+                                           char_list[ j + 2 ] + 
+                                           char_list[ j + 3 ] )
+                        # Stop the search.  The identifier has been located
+                        break
+                # If the next ASCII character is not a number reset the counter       
+                else:
+                    count = 0
+            # If a unique identifier is not located insert string as placeholder
+            # so that indexing is not corrupted
+            if count == 0 and j == len(ascii_list) - 1 :  
+                sampleList.append(listOfStrings[i])              
         return sampleList         
-
-
-
-    def string_UniqueID( fileName ):
-        '''
-        stringList_UniqueID_List()
-        
-        This method takes a strings and searches for a unique sample 
-        identifier. It then takes that unique identifier and creates a list. 
-        If one of the strings does not have a unique identifier it will put 
-        that original string back into the list
-        
-        Example String
-        
-        '690190TYA.pickle',
-        'GRC_SOUDA(AP)_167460_IW2.pickle',
-        'GRC_SOUDA-BAY-CRETE_167464_IW2.pickle',
-        'Test']
-        
-        Return String
-        
-        '690190'
-        '167460'
-        '167464'
-        'Test'
-         
-        @param fileName     - String, string containing unique identifier
-        @return uniqueID    - String, filtered strings with unique identifiers
-        '''
-
-        #Create a list of ASCII characters 
-        ascii_list =[ord(c) for c in fileName]
-        #Create a char list 
-        char_list = list(fileName)
-        count = 0 
-        # j will be the index referencing the next ASCII character
-        for j in range(0, len(ascii_list)):
-            #Filter to find a unique combination of characters and ints 
-            ###############
-            # ASCII characters for numbers 0 - 10
-            if ascii_list[j] >= 48 and ascii_list[j] <= 57:
-                #If a number is encountered increase the counter
-                count = count + 1
-                # If the count is 6 "This is how many numbers in a row 
-                    #the unique identifier will be"
-                if count == 3:
-                    # Create a string of the unique identifier
-                    uniqueID = ( char_list[ j - 2 ] +
-                                       char_list[ j - 1 ] + 
-                                       char_list[ j ]     + 
-                                       char_list[ j + 1 ] + 
-                                       char_list[ j + 2 ] + 
-                                       char_list[ j + 3 ] )
-                    # Stop the search.  The identifier has been located
-                    break
-            # If the next ASCII character is not a number reset the counter       
-            else:
-                count = 0
-        # If a unique identifier is not located insert string as placeholder
-        # so that indexing is not corrupted
-        if count == 0 and j == len(ascii_list) - 1 :  
-           uniqueID = fileName              
-        return uniqueID 
-
-
-
-

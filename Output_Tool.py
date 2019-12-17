@@ -138,24 +138,29 @@ def createPickleFiles( currentDirectory ):
     
     createPickleFiles()
     
-    Aggregate raw data (TMY3, CWEC, IWEC) into individual pickle files
+    Cycle through the folder and then put each data frame(csv)
+    into an list named df (dataframe)
     
-    @param currentDirectory  - String, where the excel file is located 
+    @param currentDirectory     - String, where the excel file is located 
                                        (passed as an argument from EXCEL using UDF)
-    @return void             - pickle containig tuples of (series:location data, dataframe:metadata)               
+    @return void                - dataframes into raw pickle datafiles               
     '''
     #XL Wings
     ##############
-    # Use the xlwings caller function to establish handshake with excel
+    # Use the xl wings caller function to establish handshake with excel
     myWorkBook = xw.Book.caller() 
     #Reference sheet 0    
     mySheet = myWorkBook.sheets[0]
     ##############  
     path = currentDirectory
-    
     myWorkBook.sheets[mySheet].range(48,4).value = \
-                            "Delete all content from previous processing"                        
-    #Delete the content of the folder.
+                                "Merging IWEC , CWEC, and TMY3 data together"
+    myWorkBook.sheets[mySheet].range(50,4).value = "Files Processed"
+    myWorkBook.sheets[mySheet].range(50,6).value = "Total Files"
+    dataFrames = rawDataImport.filesToDataFrame( path ) 
+    myWorkBook.sheets[mySheet].range(48,4).value = "Processing files to Pickle"
+    #First delete the content of the folder you will be sending the files to.
+    # We do this as organization to make sure all the files are current
     for root, dirs, files in os.walk(path + \
                               '\\Pandas_Pickle_DataFrames\\Pickle_RawData'):
         for f in files:
@@ -167,23 +172,31 @@ def createPickleFiles( currentDirectory ):
         for f in files:
             os.unlink(os.path.join(root, f))
         for d in dirs:
-            shutil.rmtree(os.path.join(root, d))    
-    
-    myWorkBook.sheets[mySheet].range(48,4).value = \
-                                "Merging IWEC , CWEC, and TMY3 data together"
-    myWorkBook.sheets[mySheet].range(50,6).value = "Total Files"
-    # Get a list of all the raw files
-    fileNames = rawDataImport.rawFilesNamesList( path )
+            shutil.rmtree(os.path.join(root, d))
+            
+            
+    #Create the tuple of series and raw data        
+            
+            
+            
+            
+            
+    #Pull out the file names from the file path(.csv files) and return a list 
+    # of file names without .csv extension
+    fileNames = rawDataImport.filesNameListCSV_EPW( path )
     myWorkBook.sheets[mySheet].range(51,6).value = len(fileNames)
-    # Aggregate raw data to tuples containing  ( series:location data , 
-    #                                            dataframe: metadata)
-    rawDataImport.rawDataToTuple( path ) 
+    # Convert the fileNames to have a .pickle extention
+    pickleStringList = rawDataImport.pickleNameList( fileNames )
+    for i in range( 0 , len( fileNames ) ):
+        dataFrames[i].to_pickle( path + \
+       '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ pickleStringList[i] )
+        myWorkBook.sheets[mySheet].range(51,4).value = i + 1
+    # Create the summary pickle
     myWorkBook.sheets[mySheet].range(48,4).value = "Creating Summary Sheet"
     myWorkBook.sheets[mySheet].range(50,4).value = ""
     myWorkBook.sheets[mySheet].range(50,6).value = ""
     myWorkBook.sheets[mySheet].range(51,4).value = ""
     myWorkBook.sheets[mySheet].range(51,6).value = ""
-    # Create a summary frame of the raw data
     rawDataImport.createPickleFileFirstRow( path )
     myWorkBook.sheets[mySheet].range(48,4).value = "Pickles Sucessfully Saved"
     
@@ -349,7 +362,7 @@ def search_Level1_Pickle_Output( currentDirectory , userInput):
     
     search_Level1_Pickle_Output()
     
-    1) Take user input "unique Identifier" 
+    1) Take user input being a unique Identifier 
     2) Search the pickle files for a match
     3) Output the raw pickle data to the excel sheet
     
