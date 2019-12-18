@@ -769,18 +769,22 @@ class finalOutputFrame:
         ##############################        
         summaryListsAs_df["Sum of Yearly Dew(mmd-1)"] = pd.DataFrame(sumOfHourlyDew_List)
 
-##################################        
-        summaryListsAs_df["Sum Rate of Degradation Environment (NEED TO ADD METRIC)"] = pd.DataFrame(sumOfDegEnv_List)
-        summaryListsAs_df["Avg Rate of Degradation Environment (NEED TO ADD METRIC)"] = pd.DataFrame(avgOfDegEnv_List)
+##################################     
         
-        summaryListsAs_df["Sum of Power (NEED TO ADD METRIC)"] = pd.DataFrame(sumOfPower_List)
-        summaryListsAs_df["Avg of Power (NEED TO ADD METRIC)"] = pd.DataFrame(avgOfPower_List)        
+                
+        summaryListsAs_df["Sum of Relative Power"] = pd.DataFrame(sumOfPower_List)
+        summaryListsAs_df["Avg of Relative Power"] = pd.DataFrame(avgOfPower_List)  
+        
+        
+        summaryListsAs_df["Sum Rate of Degradation Environment"] = pd.DataFrame(sumOfDegEnv_List)
+        summaryListsAs_df["Avg Rate of Degradation Environment"] = pd.DataFrame(avgOfDegEnv_List)
+      
         
         #Calculate the rate of Deg of a CHamber *Not Weather data*
-        summaryListsAs_df["Rate of Degradation Chamber (NEED TO ADD METRIC)"] = energyCalcs.rateOfDegChamber( .64 )
+        summaryListsAs_df["Rate of Degradation Chamber"] = energyCalcs.rateOfDegChamber( .64 )
         #FInal calculation Mike is interested in
-        summaryListsAs_df["Uncertainty Duration of Degradation rate 600*(R_DC/R_DE) (hours)"] = summaryListsAs_df.apply(lambda x: energyCalcs.timeOfDeg( x['Rate of Degradation Chamber (NEED TO ADD METRIC)'] ,
-                                                                                                                                  x['Sum Rate of Degradation Environment (NEED TO ADD METRIC)'] ),
+        summaryListsAs_df["Acceleration Factor"] = summaryListsAs_df.apply(lambda x: energyCalcs.timeOfDeg( x['Rate of Degradation Chamber'] ,
+                                                                                                                                  x['Avg Rate of Degradation Environment'] ),
                                                                                                                                 axis=1)
 ##################################################        
         
@@ -864,12 +868,12 @@ class finalOutputFrame:
                                                              'Annual Global UV Dose (MJ/y^-1)',
                                                              'Annual UV Dose at Latitude Tilt (MJ/y^-1)',
                                                               
-                                                             'Sum of Power (NEED TO ADD METRIC)',
-                                                             'Avg of Power (NEED TO ADD METRIC)',
+                                                             'Sum of Relative Power',
+                                                             'Avg of Relative Power',
                                                              
-                                                             'Avg Rate of Degradation Environment (NEED TO ADD METRIC)', 
-                                                             'Sum Rate of Degradation Environment (NEED TO ADD METRIC)',
-                                                             'Uncertainty Duration of Degradation rate 600*(R_DC/R_DE) (hours)',
+                                                             'Avg Rate of Degradation Environment', 
+                                                             'Sum Rate of Degradation Environment',
+                                                             'Acceleration Factor',
                                                              
                                                              
                                                              'Annual Minimum Ambient Temperature (C)',
@@ -931,5 +935,5 @@ class finalOutputFrame:
 
 
 #currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
-#i = 5
+#i = 500
 

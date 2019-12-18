@@ -30,7 +30,7 @@ class energyCalcs:
         
         
         
-    def rateOfDegEnv( poa, x, moduleTemp, refTemp, mult):
+    def rateOfDegEnv( poa, x, cellTemp, refTemp, mult):
         '''
         HELPER FUNCTION
         
@@ -43,13 +43,13 @@ class energyCalcs:
         
         @param poa           -float, (Global) Plan of Array irradiance (W/m^2)
         @param x             -float, fit parameter
-        @param moduleTemp    -float, soalr module temperature (C)
+        @param cellTemp      -float, solar module cell temperature (C)
         @param refTemp       -float, reference temperature (C)
         @param mult          -float, multiplier for the increase in degradation
                                      for every 10(C) temperature increase
         @return  degradation rate (NEED TO ADD METRIC)  
         '''        
-        return poa**(x) * mult ** ( (moduleTemp - refTemp)/10 )
+        return poa**(x) * mult ** ( (cellTemp - refTemp)/10 )
 
 
 
@@ -74,7 +74,7 @@ class energyCalcs:
         '''
         HELPER FUNCTION
         
-        Find the rate of degradation kenetics of a simulated chamber compared 
+        Find the acceleration factor for degradation kenetics of a simulated chamber compared 
         to environmental data for 1-year
         
         (ADD IEEE reference)
@@ -84,7 +84,7 @@ class energyCalcs:
 
         @return  degradation rate of chamber (NEED TO ADD METRIC)  
         '''        
-        return 600 * ( degRateChamber / degRateEnv )
+        return ( degRateChamber / degRateEnv )
 
 
 
