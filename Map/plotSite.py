@@ -56,8 +56,8 @@ class plotSite:
             #If the user input is a match with a raw data file
             if fileID == uniqueID_List[i]:
                 # Pull out the raw pickle of the located file name
-                raw_df = pd.read_pickle( path + '/Pandas_Pickle_DataFrames/Pickle_Level1/' + rawfileNames[i] )
-        return raw_df , summaryRow_df
+                data_tuple = pd.read_pickle( path + '/Pandas_Pickle_DataFrames/Pickle_Level1/' + rawfileNames[i] )
+        return data_tuple , summaryRow_df
     
     
     
@@ -87,8 +87,10 @@ class plotSite:
         ''' 
 
         #Access the level_1_df site specific, also collect that sites series data
-        level_1_df , siteLocation_series = plotSite.findPickleFile(fileID , currentDirectory)
+        data_tuple , siteLocation_series = plotSite.findPickleFile(fileID , currentDirectory)
         
+        # Unpack the tuple
+        site_location , level_1_df = data_tuple
         ####BOKEH PLOT########
         
         #Create the html to be exported

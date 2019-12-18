@@ -329,8 +329,10 @@ def searchRawPickle_Output( currentDirectory , userInput):
         #If the user input is a match with a raw data file
         if userInput == uniqueID_List[i]:
             # Pull out the raw pickle of the located file name
-            raw_df = pd.read_pickle( path + \
+            data_tuple = pd.read_pickle( path + \
                 '/Pandas_Pickle_DataFrames/Pickle_RawData/' + rawfileNames[i] )
+            #Unpack the tuple
+            location_series , raw_df = data_tuple            
             rawcolumnHeaders_list = list(raw_df)
             summaryColumnHeaders_list = list(summary_df) 
             myWorkBook.sheets[mySheet].range(9,1).value = rawcolumnHeaders_list
@@ -378,8 +380,10 @@ def search_Level1_Pickle_Output( currentDirectory , userInput):
         #If the user input is a match with a raw data file
         if userInput == uniqueID_List[i]:
             # Pull out the raw pickle of the located file name
-            raw_df = pd.read_pickle( path + \
+            data_tuple = pd.read_pickle( path + \
                 '/Pandas_Pickle_DataFrames/Pickle_Level1/' + rawfileNames[i] )
+            #Unpack the tuple
+            location_series , raw_df = data_tuple
             rawcolumnHeaders_list = list(raw_df)
             summaryColumnHeaders_list = list(summary_df)
             myWorkBook.sheets[mySheet].range(9,1).value = rawcolumnHeaders_list
