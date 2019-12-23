@@ -16,6 +16,7 @@ from Processing.rawDataImport import rawDataImport
 from Processing.finalOutputFrame import finalOutputFrame
 from Processing.cleanRawOutput import cleanRawOutput
 from Processing.closestLatLon import closestLatLon
+from Processing.utility import utility
 from Map.mapTemp import mapTemp
 from Map.plotSite import plotSite
 from Map.mapGenerator import mapGenerator
@@ -156,19 +157,11 @@ def createPickleFiles( currentDirectory ):
     myWorkBook.sheets[mySheet].range(48,4).value = \
                             "Delete all content from previous processing"                        
     #Delete the content of the folder.
-    for root, dirs, files in os.walk(path + \
-                              '\\Pandas_Pickle_DataFrames\\Pickle_RawData'):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))
-    for root, dirs, files in os.walk(path + \
-                               '\\Pandas_Pickle_DataFrames\\Pickle_FirstRows'):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))    
-    
+    utility.deleteAllFiles( path + \
+                              '\\Pandas_Pickle_DataFrames\\Pickle_RawData')
+    utility.deleteAllFiles(  path + \
+                              '\\Pandas_Pickle_DataFrames\\Pickle_FirstRows')
+
     myWorkBook.sheets[mySheet].range(48,4).value = \
                                 "Merging IWEC , CWEC, and TMY3 data together"
     myWorkBook.sheets[mySheet].range(50,6).value = "Total Files"
@@ -217,20 +210,10 @@ def createLevel_1_Pickles( currentDirectory ):
     myWorkBook.sheets[mySheet].range(66,4).value = "Files Processed"
     myWorkBook.sheets[mySheet].range(66,6).value = "Total Files"
     #First delete the content of the folder you will be sending the files to.
-    # We do this as organization to make sure all the files are current
-    for root, dirs, files in os.walk(currentDirectory + \
-                              '\\Pandas_Pickle_DataFrames\\Pickle_Level1'):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))
-    for root, dirs, files in os.walk(currentDirectory + \
-                        '\\Pandas_Pickle_DataFrames\\Pickle_Level1_Summary'):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))
-    # This is the largest computation currently
+    utility.deleteAllFiles( currentDirectory + \
+                              '\\Pandas_Pickle_DataFrames\\Pickle_Level1' )
+    utility.deleteAllFiles( currentDirectory + \
+                        '\\Pandas_Pickle_DataFrames\\Pickle_Level1_Summary')    
     finalOutputFrame.level_1_df_toPickle( currentDirectory )
     # User feedback
     myWorkBook.sheets[mySheet].range(64,4).value = "All Files Sucessfully Saved"

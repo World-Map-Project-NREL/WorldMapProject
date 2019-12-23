@@ -7,10 +7,12 @@ Contains energy algorithms for processing.
 import numpy as np
 from numba import jit             
 import math
-
+import pandas as pd
 
 
 class energyCalcs:
+
+    
 
     def power( cellTemp ):
         '''
@@ -25,7 +27,8 @@ class energyCalcs:
 
         @return power produced from a module (NEED TO ADD METRIC)  
         '''           
-        return ( ( 25 - cellTemp ) * .4 ) + 1 
+
+        return ( ( 25 - cellTemp ) * .004 ) + 1 
         
         
         
@@ -97,6 +100,8 @@ class energyCalcs:
         Find the dew yield in (mm·d−1).  Calculation taken from journal
         "Estimating dew yield worldwide from a few meteo data"
             -D. Beysens
+
+        (ADD IEEE reference)
         
         @param h          -int, site elevation in kilometers
         @param tD         -float, Dewpoint temperature in Celsius
@@ -122,7 +127,7 @@ class energyCalcs:
         waterVaporPressure()
         
         Find the average water vapor pressure (kPa) based on the Dew Point 
-        Temperature model created from Mike Kempe on 10/07/19.  
+        Temperature model created from Mike Kempe on 10/07/19 from Miami,FL excel sheet.  
         
         @param dewPtTemp          -float, Dew Point Temperature
         @return                   -float, return water vapor pressur in kPa
