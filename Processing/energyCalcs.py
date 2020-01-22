@@ -7,14 +7,14 @@ Contains energy algorithms for processing.
 import numpy as np
 from numba import jit             
 import math
-import pandas as pd
+#import pandas as pd
 
 
 class energyCalcs:
 
     
 
-    def power( cellTemp ):
+    def power( cellTemp , globalPOA ):
         '''
         HELPER FUNCTION
         
@@ -28,7 +28,7 @@ class energyCalcs:
         @return power produced from a module (NEED TO ADD METRIC)  
         '''           
 
-        return ( ( 25 - cellTemp ) * .004 ) + 1 
+        return ( globalPOA * ( 1 + ( 25 - cellTemp ) * .004 )  )
         
         
         

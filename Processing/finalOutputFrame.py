@@ -13,8 +13,8 @@ the solar Zenith.  The majorityof the procesing is conducted in this code.
 """
 
 import pandas as pd
-import glob
-import os 
+#import glob
+#import os 
 import xlwings as xw
 import pvlib
 import pickle
@@ -167,17 +167,22 @@ class finalOutputFrame:
         
         # Loop through all the raw data files and first row summary frame     
         for i in range (0 , len(fileNames)):
+            
+            # Import the raw dataframe of the individual location to clean and process
+            locationData , raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_RawData\\' + fileNames[i])
+            latitude = locationData.get(key = 'Site latitude')  
+            longitude = locationData.get(key = 'Site longitude')
             #Pull variables out of FirstRowSummmary data frame to be used as arguments for processing
             # Pull the arguments latitute and longitude from the first row summary of the first pickle to be processed
             # First file index i will correspond to row i of the first row summary
             # i.e row 1 of FirstRowSummary == File 1 being processed
-            latitude = float(firstRow_summary_df.loc[i]['Site latitude']) 
-            longitude = float(firstRow_summary_df.loc[i]['Site longitude']) 
+   #         latitude = float(firstRow_summary_df.loc[i]['Site latitude']) 
+   #         longitude = float(firstRow_summary_df.loc[i]['Site longitude']) 
             #Correct for Universal Time
             # From the first Row summary frame pull out the number of hours by 
             #    which local standard time is ahead or behind Universal Time ( + or -)
-            hoursAheadOrBehind = float(firstRow_summary_df.iloc[i]['Site time zone (Universal time + or -)'])
-            
+   #         hoursAheadOrBehind = float(firstRow_summary_df.iloc[i]['Site time zone (Universal time + or -)'])
+            hoursAheadOrBehind = locationData.get(key = 'Site time zone (Universal time + or -)')
             #If the latitude is in the southern hemisphere of the globe then surface azimuth of the panel must be 0 degrees
             if latitude <= 0:
                 surface_azimuth = 0
@@ -187,8 +192,7 @@ class finalOutputFrame:
             # Set the suface tilt to the latitude   
             # PVlib requires the latitude tilt to always be positve for its irradiance calculations
             surface_tilt = abs(latitude)        
-            # Import the raw dataframe of the individual location to clean and process
-            locationData , raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_RawData\\' + fileNames[i])
+
             level_1_df = firstClean.cleanedFrame( raw_df , hoursAheadOrBehind , longitude )
             ################  
             # Calculate the Solar Position
@@ -442,8 +446,7 @@ class finalOutputFrame:
             avgOfDegEnv = level_1_df['Rate of Degradation'].mean()
             avgOfDegEnv_List.append(avgOfDegEnv)
             
-            level_1_df['Power'] = level_1_df.apply(lambda x: energyCalcs.power(x['Cell Temperature(open_rack_cell_glassback)']), 
-                                                                                                axis=1)
+            level_1_df['Power'] = energyCalcs.power(level_1_df['Cell Temperature(open_rack_cell_glassback)'] , level_1_df['POA Global'])
             sumOfPower = level_1_df['Power'].sum(axis = 0, skipna = True)
             sumOfPower_List.append(sumOfPower)
             avgOfPower = level_1_df['Power'].mean()          

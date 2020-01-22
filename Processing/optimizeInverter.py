@@ -9,6 +9,7 @@ import pandas as pd
 import pvlib
 import numpy as np
 import pickle
+from datetime import datetime
 
 from utility import utility
 
@@ -113,11 +114,32 @@ class optimize:
         @return optimizedTilt      - float, optimized tilt to tenth degree accuracy               
         '''    
     
-
+        #Pull in the NREL SAM databases for modules and inverters
+        sandia_modules = pvlib.pvsystem.retrieve_sam('SandiaMod')
+        sapm_inverters = pvlib.pvsystem.retrieve_sam('cecinverter')
+    
+        #Select the module and inverter from the SAM databses you want to use for processing
+        module = sandia_modules['Canadian_Solar_CS5P_220M___2009_']
+        inverter = sapm_inverters['ABB__MICRO_0_25_I_OUTD_US_208_208V__CEC_2014_']
+        
+        
         #Unpack processed level_1 pickles
         locationData , level_1_df = level_1_tuple
+
+      #  convert = level_1_df['Local Date Time']
         
-        latitude = locationData.get(key = 'Site latitude')  
+      #  new = convert.apply(lambda dt: dt.replace(year=2020))      
+        
+        
+        
+        level_1_df.set_index("Local Date Time", inplace = True) 
+        level_1_df = level_1_df.tz_localize(int(locationData['Site time zone (Universal time + or -)']*3600))
+
+        
+        
+        
+        latitude = locationData.get(key = 'Site latitude') 
+        longitude = locationData.get(key = 'Site longitude') 
         #If the latitude is in the southern hemisphere of the globe then surface azimuth of the panel must be 0 degrees
         if latitude <= 0:
             module_azimuth = 0
@@ -132,15 +154,32 @@ class optimize:
             tilt_list[i] = round( tilt_list[i] , 1 )
         
         #Make a dataframe of necissary columns to save memory
-        allTilts_df = level_1_df[['Solar Zenith(degrees)',
-                                  'Solar Azimuth(degrees)',
+        allTilts_df = level_1_df[['Universal Date Time',
+                                  'Local Solar Time',
                                   'Direct normal irradiance(W/m^2)',
                                   'Global horizontal irradiance(W/m^2)',
                                   'Diffuse horizontal irradiance(W/m^2)',
                                   'Albedo(ratio of reflected solar irradiance to GHI)',
                                   'Wind speed(m/s)',
-                                  'Dry-bulb temperature(C)'
+                                  'Dry-bulb temperature(C)',
+                                  'Angle of incidence(degrees)',
+                                  'Station pressure(mbar)'
                                   ]]
+
+        solarPosition_df = pvlib.solarposition.get_solarposition( level_1_df.index, 
+                                                                                 latitude, 
+                                                                                 longitude) 
+        # Add onto the frame
+        allTilts_df['Solar Zenith(degrees)'] = solarPosition_df['zenith'].values
+        allTilts_df['Solar Azimuth(degrees)'] = solarPosition_df['azimuth'].values
+        allTilts_df['Apparent Zenith'] = solarPosition_df['apparent_zenith'].values
+
+
+
+
+
+########################### BIG FRAME ###########################################
+
 
         #Create frames for all the the delta tilts
         allTilts_df = pd.concat([allTilts_df]*len(tilt_list), ignore_index=True)
@@ -171,13 +210,50 @@ class optimize:
                                                             allTilts_df['Dry-bulb temperature(C)'],
                                                             model = 'open_rack_cell_glassback' )
         #Build the needed frame to calculate the sum of relative power
-        #THis is Kempe's calculation of relative power
         allTilts_df['Relative Power'] = energyCalcs.power( temp_open_rack_cell_glassback_df['temp_cell'] , totalIrradiance_df['poa_global'])
+
 
 
         sumOfPowerTiltList = allTilts_df.groupby(['Tilt'])['Relative Power'].sum()
         
+        
         optimizedTilt = sumOfPowerTiltList.idxmax()
+
+
+
+#############################################################################
+        #Use pvlb to test the optimal tilt
+        
+        #Dependent variables that need to be createde
+        airmass = pvlib.atmosphere.get_relative_airmass(allTilts_df['Apparent Zenith'])        
+        
+        # Determine absolute (pressure corrected) airmass from relative airmass and pressure
+        # Need to convert the pressure from mbar to pascals , hence *100
+        am_abs = pvlib.atmosphere.get_absolute_airmass(airmass, allTilts_df['Station pressure(mbar)']*100)
+        
+        
+        
+        #Calculates the SAPM effective irradiance using the SAPM spectral 
+        #loss and SAPM angle of incidence loss functions.(SAPM = System Advisor Model, NREL)
+        effectiveIrradiance = pvlib.pvsystem.sapm_effective_irradiance(
+                                    totalIrradiance_df['poa_direct'], totalIrradiance_df['poa_diffuse'],
+                                    am_abs, allTilts_df['Angle of incidence(degrees)'], module)    
+        
+        dc_open_rack_cell_glassback = pvlib.pvsystem.sapm(effectiveIrradiance, temp_open_rack_cell_glassback_df['temp_cell'], module)
+        ac_open_rack_cell_glassback = pvlib.pvsystem.snlinverter(dc_open_rack_cell_glassback['v_mp'], dc_open_rack_cell_glassback['p_mp'], inverter)
+
+        allTilts_df['AC Energy pvLib (Wh*hr)'] = ac_open_rack_cell_glassback
+    
+
+
+
+    ######### GROUP and OUTPUT ######################################################
+
+        sumOfPvLibPowerTiltList = allTilts_df.groupby(['Tilt'])['AC Energy pvLib (Wh*hr)'].sum()
+        
+        optimizedTiltPvLib = sumOfPvLibPowerTiltList.idxmax()
+
+
 
         return optimizedTilt
     
@@ -194,7 +270,7 @@ currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 #optimize.optimizedTiltsPickles(currentDirectory , tiltDelta )
 #optimize.optimizedTiltSummaryFramePickles(currentDirectory)
 
-fileName = 'SAU_RIYADH-OBS(OAP)_404380_IW2.pickle'    
+fileName = '725035TYA.pickle'    
 level_1_tuple = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileName)
 
 
@@ -202,12 +278,6 @@ level_1_tuple = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\
 #test = optimize.getOptimizeTilt( level_1_tuple , tiltDelta ) 
 #test = optimize.getOptimizeTilt(currentDirectory, fileName,  latitude , delta )         
 #power = energyCalcs.power( 9.0575 , 9.4728)    
-
-
-
-
-
-
 
 
 
