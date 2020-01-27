@@ -83,7 +83,7 @@ class utility:
         
         filesNameList()
         
-        Pull out the file pathes and return a list of file names
+        Pull out the file paths and return a list of file names
         
         @param path       -String, path to the folder with the pickle files
         

@@ -166,8 +166,8 @@ def createPickleFiles( currentDirectory ):
                                 "Merging IWEC , CWEC, and TMY3 data together"
     myWorkBook.sheets[mySheet].range(50,6).value = "Total Files"
     # Get a list of all the raw files
-    fileNames = rawDataImport.rawFilesNamesList( path )
-    myWorkBook.sheets[mySheet].range(51,6).value = len(fileNames)
+    numFiles = len( rawDataImport.rawFilesNamesList( path ) )
+    myWorkBook.sheets[mySheet].range(51,6).value = numFiles
     # Aggregate raw data to tuples containing  ( series:location data , 
     #                                            dataframe: metadata)
     rawDataImport.rawDataToTuple( path ) 

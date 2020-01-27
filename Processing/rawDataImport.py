@@ -16,7 +16,6 @@ pickles are stored into a specific directory
 
 @author: Derek Holsapple
 """
-#################NEED TO CREATE LEVEL 1 PICKLES
 
 import glob
 import pandas as pd
@@ -25,7 +24,7 @@ import io
 import pickle
 
 from Processing.cleanRawOutput  import cleanRawOutput
-#from cleanRawOutput  import cleanRawOutput
+#from cleanRawOutput import cleanRawOutput
 
 try:
     # python 2 compatibility
@@ -872,8 +871,9 @@ class rawDataImport:
 
 
 
-#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject'
+#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 #path = currentDirectory
+#dingo, baby = tupleList[770]
 #i = 0
 #j = 0
 #rawDataImport.filesToDataFrame( path )
