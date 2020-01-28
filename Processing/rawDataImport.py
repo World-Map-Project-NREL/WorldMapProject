@@ -669,12 +669,23 @@ class rawDataImport:
         head = ['loc', 'city', 'state-prov', 'country', 'data_type', 'WMO_code',
                 'latitude', 'longitude', 'TZ', 'altitude']
         meta = dict(zip(head, firstline.rstrip('\n').split(",")))
-    
-        meta['altitude'] = float(meta['altitude'])
-        meta['latitude'] = float(meta['latitude'])
-        meta['longitude'] = float(meta['longitude'])
-        meta['TZ'] = float(meta['TZ'])
-    
+        
+#        meta['altitude'] = float(meta['altitude'])
+#        meta['latitude'] = float(meta['latitude'])
+#        meta['longitude'] = float(meta['longitude'])
+ #       meta['TZ'] = float(meta['TZ'])
+########################################################3        
+        try:
+            meta['altitude'] = float(meta['altitude'])
+            meta['latitude'] = float(meta['latitude'])
+            meta['longitude'] = float(meta['longitude'])
+            meta['TZ'] = float(meta['TZ'])
+        except:
+            meta['altitude'] = ''
+            meta['latitude'] = ''
+            meta['longitude'] = ''
+            meta['TZ'] = ''
+ ###################################################################           
         colnames = ['year', 'month', 'day', 'hour', 'minute', 'data_source_unct',
                     'temp_air', 'temp_dew', 'relative_humidity',
                     'atmospheric_pressure', 'etr', 'etrn', 'ghi_infrared', 'ghi',
@@ -869,11 +880,3 @@ class rawDataImport:
     
         return meta
 
-
-
-#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
-#path = currentDirectory
-#dingo, baby = tupleList[770]
-#i = 0
-#j = 0
-#rawDataImport.filesToDataFrame( path )

@@ -33,7 +33,7 @@ class energyCalcs:
         
         
         
-    def rateOfDegEnv( poa, x, cellTemp, refTemp, mult):
+    def rateOfDegEnv( poa, x, cellTemp, refTemp, Tf):
         '''
         HELPER FUNCTION
         
@@ -44,19 +44,19 @@ class energyCalcs:
         
         (ADD IEEE reference)
         
-        @param poa           -float, (Global) Plan of Array irradiance (W/m^2)
-        @param x             -float, fit parameter
-        @param cellTemp      -float, solar module cell temperature (C)
-        @param refTemp       -float, reference temperature (C)
-        @param mult          -float, multiplier for the increase in degradation
-                                     for every 10(C) temperature increase
+        @param poa                 -float, (Global) Plan of Array irradiance (W/m^2)
+        @param x                   -float, fit parameter
+        @param cellTemp            -float, solar module cell temperature (C)
+        @param refTemp             -float, reference temperature (C)
+        @param Tf                  -float, multiplier for the increase in degradation
+                                          for every 10(C) temperature increase
         @return  degradation rate (NEED TO ADD METRIC)  
         '''        
-        return poa**(x) * mult ** ( (cellTemp - refTemp)/10 )
+        return poa**(x) * Tf ** ( (cellTemp - refTemp)/10 )
 
 
 
-    def rateOfDegChamber( x ):
+    def rateOfDegChamber( Ichamber , x ):
         '''
         HELPER FUNCTION
         
@@ -65,15 +65,16 @@ class energyCalcs:
         
         (ADD IEEE reference)
 
+        @param Ichamber      -float, Irradiance of Controlled Condition W/m^2
         @param x             -float, fit parameter
 
-        @return  degradation rate of chamber (NEED TO ADD METRIC)  
+        @return  degradation rate of chamber 
         '''        
-        return 2189 ** ( x )
+        return Ichamber ** ( x )
 
 
 
-    def timeOfDeg( degRateChamber , degRateEnv ):
+    def timeOfDeg( rateOfDegChamber , rateOfDegEnv ):
         '''
         HELPER FUNCTION
         
@@ -82,12 +83,45 @@ class energyCalcs:
         
         (ADD IEEE reference)
 
-        @param degRateEnv             -float, degradation rate of environment
-        @param degRateChamber         -float, degredation rate of chamber
+        @param rateOfDegChamber      -float, degradation rate of environment
+        @param rateOfDegEnv         -float, degredation rate of chamber
 
         @return  degradation rate of chamber (NEED TO ADD METRIC)  
         '''        
-        return ( degRateChamber / degRateEnv )
+        return ( rateOfDegChamber / rateOfDegEnv )
+    
+    
+    
+    def vantHoffDeg( x , Ichamber , globalPOA , moduleTemp , Tf , refTemp):    
+        '''
+        Vant Hoff Irradiance Degradation 
+        
+        Find the rate of degradation kenetics of a simulated chamber. 
+        
+        (ADD IEEE reference)
+    
+        @param globalPOA             -series, Global Plane of Array Irradiance W/m^2
+        @param x                     -series, Solar Module Temperature (C)
+    
+        @return  sumOfDegEnv         -float, Summation of Degradation Environment 
+        @return  avgOfDegEnv         -float, Average rate of Degradation Environment
+        @return  rateOfDegChamber    -float, Rate of Degradation from Simulated Chamber
+        @return  accelerationFactor  -float, Degradation acceleration factor
+        '''  
+        rateOfDegEnv = energyCalcs.rateOfDegEnv(globalPOA,
+                                                        x , 
+                                                        moduleTemp ,
+                                                        refTemp ,
+                                                        Tf )        
+        sumOfDegEnv = rateOfDegEnv.sum(axis = 0, skipna = True)
+        avgOfDegEnv = rateOfDegEnv.mean()
+            
+        rateOfDegChamber = energyCalcs.rateOfDegChamber( Ichamber , x )
+        
+        accelerationFactor = energyCalcs.timeOfDeg( rateOfDegChamber , avgOfDegEnv)
+        
+        return  sumOfDegEnv, avgOfDegEnv, rateOfDegChamber, accelerationFactor
+        
 
 
 

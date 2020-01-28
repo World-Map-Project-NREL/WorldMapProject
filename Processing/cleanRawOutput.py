@@ -107,6 +107,7 @@ class cleanRawOutput:
         '690190TYA.pickle',
         'GRC_SOUDA(AP)_167460_IW2.pickle',
         'GRC_SOUDA-BAY-CRETE_167464_IW2.pickle',
+        'tmy_1.962_29.621_2005_2014.epw'
         'Test']
         
         Return String
@@ -114,13 +115,12 @@ class cleanRawOutput:
         '690190'
         '167460'
         '167464'
+        '962_29'
         'Test'
          
         @param fileName     - String, string containing unique identifier
         @return uniqueID    - String, filtered strings with unique identifiers
         '''
-
-        #Create a list of ASCII characters 
         ascii_list =[ord(c) for c in fileName]
         #Create a char list 
         char_list = list(fileName)
@@ -129,8 +129,8 @@ class cleanRawOutput:
         for j in range(0, len(ascii_list)):
             #Filter to find a unique combination of characters and ints 
             ###############
-            # ASCII characters for numbers 0 - 10
-            if ascii_list[j] >= 48 and ascii_list[j] <= 57:
+            # ASCII characters for numbers 0 - 10, or a Underscore '_'
+            if (ascii_list[j] >= 48 and ascii_list[j] <= 57) or (ascii_list[j] == 95 and count >=1): 
                 #If a number is encountered increase the counter
                 count = count + 1
                 # If the count is 6 "This is how many numbers in a row 
@@ -138,11 +138,16 @@ class cleanRawOutput:
                 if count == 3:
                     # Create a string of the unique identifier
                     uniqueID = ( char_list[ j - 2 ] +
-                                       char_list[ j - 1 ] + 
-                                       char_list[ j ]     + 
-                                       char_list[ j + 1 ] + 
-                                       char_list[ j + 2 ] + 
-                                       char_list[ j + 3 ] )
+                                 char_list[ j - 1 ] + 
+                                 char_list[ j ]     + 
+                                 char_list[ j + 1 ] + 
+                                 char_list[ j + 2 ] + 
+                                 char_list[ j + 3 ] )
+                    #If there is a '-' from satellite data Lat/Lon raw string
+                    if "-" in uniqueID:
+                        uniqueID = uniqueID.replace('-', char_list[ j + 4 ])
+                    if "." in uniqueID:
+                        uniqueID = uniqueID.replace('.', '0')
                     # Stop the search.  The identifier has been located
                     break
             # If the next ASCII character is not a number reset the counter       
@@ -150,10 +155,7 @@ class cleanRawOutput:
                 count = 0
         # If a unique identifier is not located insert string as placeholder
         # so that indexing is not corrupted
-        if count == 0 and j == len(ascii_list) - 1 :  
-           uniqueID = fileName              
+        if count == 0 and j == len(ascii_list) - 1 :        
+           uniqueID = fileName  
         return uniqueID 
-
-
-
 

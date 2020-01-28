@@ -18,7 +18,7 @@ from bokeh.models import LogTicker, ColorBar
 class mapGenerator:
 
     def mapGenerator(path , mapSelect , htmlString , title, 
-                     scaleMin, scaleMax, metric):
+                     scaleMin, scaleMax, metric, custom):
         '''
         HELPER FUNCTION
         
@@ -50,12 +50,19 @@ class mapGenerator:
          'Sum of Yearly Water Vapor Pressure(kPa)',
          "Annual number of Hours Relative Humidity > to 85%",
          'Sum of Yearly Dew(mmd-1)'
+         
+         CUSTOM MAPS
+         'Acceleration Factor'
+         'Sum Rate of Degradation Environmnet'
+         'Avg Rate of Degradation Environmnet'
 
         @param htmlString - String, what to name the html 
         @param title      - String, title of the map
         @param scaleMin   - Float,  minimum value of the scale
         @param scaleMax   - Float,  maximum value of the scale        
         @param metric     - String, metric of the value being measured        
+        @param custom     - Boolean, True = pull from a custom SUmmary pickle
+                                     False = pull form defualt summary table
         
         @return           -void, Bokeh map as a html
         '''    
@@ -74,7 +81,10 @@ class mapGenerator:
         with open(path + "/Map/us-states.json", "r") as f:
             states = bkm.GeoJSONDataSource(geojson=f.read())              
         #Access the processed summary data pickle
-        level_1_df = pd.read_pickle(path + "\\Pandas_Pickle_DataFrames\\Pickle_Level1_Summary\\Pickle_Level1_Summary.pickle")
+        if custom:
+            level_1_df = pd.read_pickle(path + "\\Pandas_Pickle_DataFrames\\Pickle_CustomCals\\vantHoffSummary.pickle")
+        else:
+            level_1_df = pd.read_pickle(path + "\\Pandas_Pickle_DataFrames\\Pickle_Level1_Summary\\Pickle_Level1_Summary.pickle")
         
         #Radius is the size of the circle to be displayed on the map
         radiusList = []
@@ -212,6 +222,11 @@ class mapGenerator:
             Sum of Yearly Water Vapor Pressure
             Annual Hours Relative Humidity > 85%
             Sum of Yearly Dew
+            
+          **CUSTOM MAPS**
+           Acceleration Factor
+           Sum Rate of Degradation Environmnet
+           Avg Rate of Degradation Environmnet
         '''
         
         if mapType == 'Annual GHI':
@@ -222,7 +237,7 @@ class mapGenerator:
             scaleMax = 8
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
             
         elif mapType == 'Annual DNI':
             title = 'Annual Direct Normal Irradiance (GJ/m^-2)'    
@@ -232,7 +247,7 @@ class mapGenerator:
             scaleMax = 10
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
     
         elif mapType == 'Annual DHI':
             title = 'Annual Diffuse Horizontal Irradiance (GJ/m^-2)'    
@@ -242,7 +257,7 @@ class mapGenerator:
             scaleMax = 4
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
     
         elif mapType == 'Annual POA Global Irradiance':
             title = 'Annual POA Global Irradiance (GJ/m^-2)'    
@@ -252,7 +267,7 @@ class mapGenerator:
             scaleMax = 8
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
 
         elif mapType == 'Annual POA Direct Irradiance':
             title = 'Annual POA Direct Irradiance (GJ/m^-2)'    
@@ -262,7 +277,7 @@ class mapGenerator:
             scaleMax = 8
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
 
         elif mapType == 'Annual POA Diffuse Irradiance':
             title = 'Annual POA Diffuse Irradiance (GJ/m^-2)'    
@@ -272,7 +287,7 @@ class mapGenerator:
             scaleMax = 4
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
             
         elif mapType == 'Annual POA Sky Diffuse Irradiance':
             title = 'Annual POA Sky Diffuse Irradiance (GJ/m^-2)'    
@@ -282,7 +297,7 @@ class mapGenerator:
             scaleMax = 4
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)            
+                                      scaleMin, scaleMax , metric, False)            
 
         elif mapType == 'Annual POA Ground Diffuse Irradiance':
             title = 'Annual POA Ground Diffuse Irradiance (GJ/m^-2)'    
@@ -292,7 +307,7 @@ class mapGenerator:
             scaleMax = .40
             metric = "(GJ/m^-2)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)            
+                                      scaleMin, scaleMax , metric, False)            
 
         elif mapType == 'Annual Global UV Dose':
             title = 'Annual Global UV Dose (MJ/y^-1)'    
@@ -302,7 +317,7 @@ class mapGenerator:
             scaleMax = 400
             metric = "(MJ/y^-1)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)            
+                                      scaleMin, scaleMax , metric, False)            
 
         elif mapType == 'Annual UV Dose at Latitude Tilt':
             title = 'Annual UV Dose at Latitude Tilt (MJ/y^-1)'    
@@ -312,7 +327,7 @@ class mapGenerator:
             scaleMax = 400
             metric = "(MJ/y^-1)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)            
+                                      scaleMin, scaleMax , metric, False)            
 
         elif mapType == 'Annual Minimum Ambient Temperature':
             title = 'Annual Minimum Ambient Temperature (C)'    
@@ -322,7 +337,7 @@ class mapGenerator:
             scaleMax = 25
             metric = "(C)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric) 
+                                      scaleMin, scaleMax , metric, False) 
 
         elif mapType == 'Annual Average Ambient Temperature':
             title = 'Annual Average Ambient Temperature (C)'    
@@ -332,7 +347,7 @@ class mapGenerator:
             scaleMax = 30
             metric = "(C)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric) 
+                                      scaleMin, scaleMax , metric, False) 
 
         elif mapType == 'Annual Maximum Ambient Temperature':
             title = 'Annual Maximum Ambient Temperature (C)'    
@@ -342,7 +357,7 @@ class mapGenerator:
             scaleMax = 50
             metric = "(C)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric) 
+                                      scaleMin, scaleMax , metric, False) 
 
         elif mapType == 'Annual Range Ambient Temperature':
             title = 'Annual Range Ambient Temperature (C)'    
@@ -352,7 +367,7 @@ class mapGenerator:
             scaleMax = 80
             metric = "(C)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric) 
+                                      scaleMin, scaleMax , metric, False) 
 
         elif mapType == 'Average of Yearly Water Vapor Pressure':
             title = 'Average Yearly Water Vapor Pressure (kPa)'    
@@ -362,7 +377,7 @@ class mapGenerator:
             scaleMax = 3.2
             metric = "(kPa)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
 
         elif mapType == 'Sum of Yearly Water Vapor Pressure':
             title = 'Sum of Yearly Water Vapor Pressure(kPa)'    
@@ -372,7 +387,7 @@ class mapGenerator:
             scaleMax = 25000
             metric = "(kPa)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
 
         elif mapType == 'Annual Hours Relative Humidity > 85%':
             title = 'Annual number of Hours Relative Humidity > to 85%'    
@@ -382,7 +397,7 @@ class mapGenerator:
             scaleMax = 5000
             metric = "(hours)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
 
         elif mapType == 'Sum of Yearly Dew':
             title = 'Sum of Yearly Dew(mmd-1)'    
@@ -392,4 +407,65 @@ class mapGenerator:
             scaleMax = 50
             metric = "(mmd-1)"
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric)
+                                      scaleMin, scaleMax , metric, False)
+        elif mapType == 'Acceleration Factor':
+            title = 'Acceleration Factor (years)'    
+            mapSelect = 'Acceleration Factor'
+            htmlString = 'Acceleration_Factor'    
+            scaleMin = 1
+            scaleMax = 25
+            metric = "years"
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, True)
+            
+        elif mapType == 'Sum Rate of Degradation Environmnet':
+            title = 'Sum Rate of Degradation Environmnet'    
+            mapSelect = 'Sum Rate of Degradation Environmnet'
+            htmlString = 'Sum_Rate_of_Degradation_Environmnet'    
+            scaleMin = 50000
+            scaleMax = 150000
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, True)
+            
+        elif mapType == 'Avg Rate of Degradation Environmnet':
+            title = 'Avg Rate of Degradation Environmnet'    
+            mapSelect = 'Avg Rate of Degradation Environmnet'
+            htmlString = 'Avg_Rate_of_Degradation_Environmnet'    
+            scaleMin = 1
+            scaleMax = 20
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, True)            
+            
+#path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'    
+#mapType = 'Avg Rate of Degradation Environmnet' 
+   
+#mapGenerator.mapGeneratorDriver(path , mapType)            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            

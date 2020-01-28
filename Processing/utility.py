@@ -86,7 +86,11 @@ class utility:
         Pull out the file paths and return a list of file names
         
         @param path       -String, path to the folder with the pickle files
-        
+        @param selector   -String, list of data desired
+                                   'rawData' : paths of raw data
+                                   'level_1_data' : paths of processed data at Latitude tilt
+                                   'optimizedTilt' : paths of processed data at Optimized Tilt
+                                    
         @return allFiles  -String List, filenames without the file path
         
         '''  
@@ -175,5 +179,5 @@ class utility:
             # If a unique identifier is not located insert string as placeholder
             #   so that indexing is not corrupted
             if j == len(ascii_list) - 1 :   
-                dataSource = "UNKNOWN"              
+                dataSource = "SATELLITE"              
         return dataSource           

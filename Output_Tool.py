@@ -139,7 +139,7 @@ def createPickleFiles( currentDirectory ):
     
     createPickleFiles()
     
-    Aggregate raw data (TMY3, CWEC, IWEC) into individual pickle files
+    Aggregate raw data (TMY3, CWEC, IWEC, Satellite Data) into individual pickle files
     
     @param currentDirectory  - String, where the excel file is located 
                                        (passed as an argument from EXCEL using UDF)

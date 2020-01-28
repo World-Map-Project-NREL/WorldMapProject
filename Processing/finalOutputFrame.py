@@ -539,6 +539,11 @@ class finalOutputFrame:
  
             #Search the string and determine if the data is TMY3, CWEC, or IWEC
             dataSource_List.append( utility.dataSource(fileNames[i]) )
+            
+            # Add the data source to the location data description
+            dataSource = pd.Series( utility.dataSource(fileNames[i]), index=['Data Source'])
+            locationData = locationData.append( dataSource )
+            #Copy individual data source into each site location data
             #List of unique identifiers for reference
             filePath_List.append(fileNames[i])
             level_1_df = level_1_df.reindex(columns = ['Local Date Time',
@@ -853,5 +858,5 @@ class finalOutputFrame:
 
 
 #currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
-#i = 500
-
+#i = 4805
+#level1Files = utility.filesNameList( currentDirectory , 'level_1_data' )
