@@ -47,7 +47,7 @@ class energyCalcs:
         @param poa                 -float, (Global) Plan of Array irradiance (W/m^2)
         @param x                   -float, fit parameter
         @param cellTemp            -float, solar module cell temperature (C)
-        @param refTemp             -float, reference temperature (C)
+        @param refTemp             -float, reference temperature (C) "Chamber Temperature"
         @param Tf                  -float, multiplier for the increase in degradation
                                           for every 10(C) temperature increase
         @return  degradation rate (NEED TO ADD METRIC)  
@@ -96,17 +96,19 @@ class energyCalcs:
         '''
         Vant Hoff Irradiance Degradation 
         
-        Find the rate of degradation kenetics of a simulated chamber. 
-        
-        (ADD IEEE reference)
-    
-        @param globalPOA             -series, Global Plane of Array Irradiance W/m^2
-        @param x                     -series, Solar Module Temperature (C)
-    
-        @return  sumOfDegEnv         -float, Summation of Degradation Environment 
-        @return  avgOfDegEnv         -float, Average rate of Degradation Environment
-        @return  rateOfDegChamber    -float, Rate of Degradation from Simulated Chamber
-        @return  accelerationFactor  -float, Degradation acceleration factor
+
+        @param x                     -float, fit parameter
+        @param Ichamber              -float, Irradiance of Controlled Condition W/m^2
+        @param globalPOA             -float or series, Global Plane of Array Irradiance W/m^2
+        @param cellTemp              -float or series, solar module cell temperature (C)
+        @param Tf                    -float, multiplier for the increase in degradation
+                                          for every 10(C) temperature increase
+        @param refTemp               -float, reference temperature (C) "Chamber Temperature"                                          
+                                          
+        @return  sumOfDegEnv         -float or series, Summation of Degradation Environment 
+        @return  avgOfDegEnv         -float or series, Average rate of Degradation Environment
+        @return  rateOfDegChamber    -float or series, Rate of Degradation from Simulated Chamber
+        @return  accelerationFactor  -float or series, Degradation acceleration factor
         '''  
         rateOfDegEnv = energyCalcs.rateOfDegEnv(globalPOA,
                                                         x , 

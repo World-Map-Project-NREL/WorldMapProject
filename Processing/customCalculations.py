@@ -12,22 +12,37 @@ applied to the TMY data
 @author: dholsapp
 """
 
-from utility import utility
-from energyCalcs import energyCalcs
+from Processing.utility import utility
+from Processing.energyCalcs import energyCalcs
+
+#from utility import utility
+#from energyCalcs import energyCalcs
+
 import pandas as pd
 
 
-class customCalcualtions:
+class customCalculations:
 
-    def generateVantHoffSummarySheet(refTemp , Tf , x , Ichamber , currentDirectory ):
+    def generateVantHoffSummarySheet(configType , refTemp , Tf , x , Ichamber , currentDirectory ):
         '''
         Create a summary frame of Vant Hoff Irradiance Degradation based on level_1
-        dataframes
+        dataframes naming convention
         
-    
-        @param currentDirectory     -string, path
-    
-        @return  degSummarySheet    -dataframe, Summary of Vant Hoff Degradation Calculation
+        @param configType            -string, name of the dataframe column containing temperature
+                                          'Module Temperature(open_rack_cell_glassback)(C)'
+                                          'Module Temperature(roof_mount_cell_glassback)(C)'
+                                          'Module Temperature(open_rack_cell_polymerback)(C)'
+                                          'Module Temperature(insulated_back_polymerback)(C)'                                        
+                                          'Module Temperature(open_rack_polymer_thinfilm_steel)(C)' 
+                                          'Module Temperature(22x_concentrator_tracker)(C)'
+        @param currentDirectory      -string, path of current working directory
+        @param refTemp               -float, reference temperature (C) "Chamber Temperature"  
+        @param Tf                    -float, multiplier for the increase in degradation
+                                          for every 10(C) temperature increase                                          
+        @param x                     -float, fit parameter
+        @param Ichamber              -float, Irradiance of Controlled Condition W/m^2
+                 
+        @return  degSummarySheet     -dataframe, Summary of Vant Hoff Degradation Calculation
                                                       'FilePath'
                                                       'Station name'
                                                       'Station country or political unit'
@@ -68,7 +83,7 @@ class customCalcualtions:
             locationData , level_1_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[i])    
         
             globalPOA = level_1_df['POA Global(W/m^2)']
-            moduleTemp = level_1_df['Module Temperature(open_rack_cell_glassback)(C)']
+            moduleTemp = level_1_df[configType]
         
             sumOfDegEnv, avgOfDegEnv, rateOfDegChamber, accelerationFactor = energyCalcs.vantHoffDeg( x , Ichamber , globalPOA , moduleTemp , Tf , refTemp )    
             
@@ -98,7 +113,8 @@ class customCalcualtions:
 #x = .64 
 #Ichamber = 2189 
 #currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
+#configType = 'Module Temperature(open_rack_polymer_thinfilm_steel)(C)'
 
-#test = customCalcualtions.generateVantHoffSummarySheet(refTemp, Tf , x , Ichamber , currentDirectory )
+#test = customCalculations.generateVantHoffSummarySheet(configType , refTemp, Tf , x , Ichamber , currentDirectory )
 
 

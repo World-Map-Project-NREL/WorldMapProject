@@ -17,6 +17,7 @@ from Processing.finalOutputFrame import finalOutputFrame
 from Processing.cleanRawOutput import cleanRawOutput
 from Processing.closestLatLon import closestLatLon
 from Processing.utility import utility
+from Processing.customCalculations import customCalculations
 from Map.mapTemp import mapTemp
 from Map.plotSite import plotSite
 from Map.mapGenerator import mapGenerator
@@ -453,7 +454,32 @@ def outputMapDriver( currentDirectory , mapType ):
     
     @param currentDirectory    - String, where the excel file is located 
                                        (passed as an argument from EXCEL using UDF)
-    @param mapType             - String, The type of data to display as a map
+    @param mapType              - String,  select what map to generate
+
+        Annual GHI
+        Annual DNI
+        Annual DHI
+        Annual POA Global Irradiance
+        Annual POA Direct Irradiance
+        Annual POA Diffuse Irradiance
+        Annual POA Sky Diffuse Irradiance
+        Annual POA Ground Diffuse Irradiance
+        Annual Global UV Dose
+        Annual UV Dose at Latitude Tilt
+        
+        Annual Minimum Ambient Temperature
+        Annual Average Ambient Temperature
+        Annual Maximum Ambient Temperature
+        Annual Range Ambient Temperature
+        Average of Yearly Water Vapor Pressure
+        Sum of Yearly Water Vapor Pressure
+        Annual Hours Relative Humidity > 85%
+        Sum of Yearly Dew
+        
+      **CUSTOM MAPS**
+       Acceleration Factor
+       Sum Rate of Degradation Environmnet
+       Avg Rate of Degradation Environmnet
                            
     @return void               - Void, Renders a world map          
     '''    
@@ -478,3 +504,60 @@ def outputPlotDriver( currentDirectory , fileID , selector ):
     @return void               - Void, Renders a data plot of a individual site          
     '''    
     plotSite.xLWingsInterfacePlot( currentDirectory , fileID , selector )
+    
+    
+def outputVantHoffCalc( currentDirectory , configType , refTemp , Tf , x , Ichamber ):
+    '''
+    XL Wings FUNCTIONS
+    
+    outputVantHoffCalc()
+    
+    Driver to calculate Van Hoff Calculation from custom user input parameter 
+    passed from XLWings
+    
+    @param currentDirectory    - String, where the excel file is located 
+                                       (passed as an argument from EXCEL using UDF)
+    @param configType            -string, name of the dataframe column containing temperature
+                                      'Module Temperature(open_rack_cell_glassback)(C)'
+                                      'Module Temperature(roof_mount_cell_glassback)(C)'
+                                      'Module Temperature(open_rack_cell_polymerback)(C)'
+                                      'Module Temperature(insulated_back_polymerback)(C)'                                        
+                                      'Module Temperature(open_rack_polymer_thinfilm_steel)(C)' 
+                                      'Module Temperature(22x_concentrator_tracker)(C)'
+    @param refTemp               -float, reference temperature (C) "Chamber Temperature"  
+    @param Tf                    -float, multiplier for the increase in degradation
+                                      for every 10(C) temperature increase                                          
+    @param x                     -float, fit parameter
+    @param Ichamber              -float, Irradiance of Controlled Condition W/m^2                                                                 
+                                
+    @return void                 - Void, Renders a map of custom Van Hoff Calculation          
+    '''    
+    
+    vantHoff_df = customCalculations.generateVantHoffSummarySheet(configType,
+                                                                  refTemp ,
+                                                                  Tf , 
+                                                                  x , 
+                                                                  Ichamber , 
+                                                                  currentDirectory )    
+    #XL Wings
+    ##############
+    # Use the xl wings caller function to establish handshake with excel
+    myWorkBook = xw.Book.caller() 
+#    myWorkBook = xw.Book( currentDirectory + r'\Output_Tool.xlsm' )
+    #Reference sheet 0    
+    mySheet = myWorkBook.sheets[4]
+    ##############
+
+    vantHoff_df  = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\' + \
+                        'Pickle_CustomCals\\vantHoffSummary.pickle')
+    columnHeaders_list = list(vantHoff_df)  
+    myWorkBook.sheets[mySheet].range(20,1).value = columnHeaders_list
+    myWorkBook.sheets[mySheet].range(21,1).value = vantHoff_df.values.tolist()
+    
+   
+    
+  
+    
+    
+#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
+    

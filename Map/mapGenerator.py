@@ -439,33 +439,8 @@ class mapGenerator:
                                       scaleMin, scaleMax , metric, True)            
             
 #path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'    
-#mapType = 'Avg Rate of Degradation Environmnet' 
-   
+#mapType = 'Avg Rate of Degradation Environmnet'   
 #mapGenerator.mapGeneratorDriver(path , mapType)            
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
             

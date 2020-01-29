@@ -855,8 +855,6 @@ class finalOutputFrame:
         finalSummary_df.to_pickle( currentDirectory + '\Pandas_Pickle_DataFrames\Pickle_Level1_Summary\Pickle_Level1_Summary.pickle')
 
 
-
-
 #currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 #i = 4805
 #level1Files = utility.filesNameList( currentDirectory , 'level_1_data' )
