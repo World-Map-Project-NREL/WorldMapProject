@@ -92,7 +92,7 @@ class energyCalcs:
     
     
     
-    def vantHoffDeg( x , Ichamber , globalPOA , moduleTemp , Tf , refTemp):    
+    def vantHoffDeg( x , Ichamber , globalPOA , cellTemp , Tf , refTemp):    
         '''
         Vant Hoff Irradiance Degradation 
         
@@ -112,7 +112,7 @@ class energyCalcs:
         '''  
         rateOfDegEnv = energyCalcs.rateOfDegEnv(globalPOA,
                                                         x , 
-                                                        moduleTemp ,
+                                                        cellTemp ,
                                                         refTemp ,
                                                         Tf )        
         sumOfDegEnv = rateOfDegEnv.sum(axis = 0, skipna = True)

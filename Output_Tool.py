@@ -518,12 +518,12 @@ def outputVantHoffCalc( currentDirectory , configType , refTemp , Tf , x , Icham
     @param currentDirectory    - String, where the excel file is located 
                                        (passed as an argument from EXCEL using UDF)
     @param configType            -string, name of the dataframe column containing temperature
-                                      'Module Temperature(open_rack_cell_glassback)(C)'
-                                      'Module Temperature(roof_mount_cell_glassback)(C)'
-                                      'Module Temperature(open_rack_cell_polymerback)(C)'
-                                      'Module Temperature(insulated_back_polymerback)(C)'                                        
-                                      'Module Temperature(open_rack_polymer_thinfilm_steel)(C)' 
-                                      'Module Temperature(22x_concentrator_tracker)(C)'
+                                      'Cell Temperature(open_rack_cell_glassback)(C)'
+                                      'Cell Temperature(roof_mount_cell_glassback)(C)'
+                                      'Cell Temperature(open_rack_cell_polymerback)(C)'
+                                      'Cell Temperature(insulated_back_polymerback)(C)'                                        
+                                      'Cell Temperature(open_rack_polymer_thinfilm_steel)(C)' 
+                                      'Cell Temperature(22x_concentrator_tracker)(C)'
     @param refTemp               -float, reference temperature (C) "Chamber Temperature"  
     @param Tf                    -float, multiplier for the increase in degradation
                                       for every 10(C) temperature increase                                          
@@ -550,6 +550,12 @@ def outputVantHoffCalc( currentDirectory , configType , refTemp , Tf , x , Icham
 
     vantHoff_df  = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\' + \
                         'Pickle_CustomCals\\vantHoffSummary.pickle')
+    
+    inputDataColumns = ['Module Type at Latitude Tilt', 'Tchamber', 'Tf', 'x', 'Ichamber']
+    inputData_List = [configType[17:-4], refTemp , Tf , x , Ichamber]
+    myWorkBook.sheets[mySheet].range(17,1).value = inputDataColumns    
+    myWorkBook.sheets[mySheet].range(18,1).value = inputData_List    
+    
     columnHeaders_list = list(vantHoff_df)  
     myWorkBook.sheets[mySheet].range(20,1).value = columnHeaders_list
     myWorkBook.sheets[mySheet].range(21,1).value = vantHoff_df.values.tolist()

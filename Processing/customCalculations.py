@@ -71,8 +71,10 @@ class customCalculations:
                                                 'Site longitude',
                                                 'Site time zone (Universal time + or -)', 
                                                 'Site elevation (meters)',
+                                                'Sum of Global Plane of Array (W/m^2)',
+                                                'Average of Global Plane of Array (W/m^2)',
+                                                'Average Cell Temperature',
                                                 'Avg Rate of Degradation Environmnet',
-                                                'Sum Rate of Degradation Environmnet',
                                                 'Rate Of Degradation Controlled Environmnet',
                                                 'Acceleration Factor'
                                                 ])
@@ -83,9 +85,9 @@ class customCalculations:
             locationData , level_1_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[i])    
         
             globalPOA = level_1_df['POA Global(W/m^2)']
-            moduleTemp = level_1_df[configType]
+            cellTemp = level_1_df[configType]
         
-            sumOfDegEnv, avgOfDegEnv, rateOfDegChamber, accelerationFactor = energyCalcs.vantHoffDeg( x , Ichamber , globalPOA , moduleTemp , Tf , refTemp )    
+            sumOfDegEnv, avgOfDegEnv, rateOfDegChamber, accelerationFactor = energyCalcs.vantHoffDeg( x , Ichamber , globalPOA , cellTemp , Tf , refTemp )    
             
             degSummarySheet = degSummarySheet.append({'Site Identifier Code':  locationData.get(key = 'Site Identifier Code'), 
                               'FilePath': fileNames[i], 
@@ -97,8 +99,10 @@ class customCalculations:
                               'Site longitude': locationData.get(key = 'Site longitude'),
                               'Site time zone (Universal time + or -)': locationData.get(key = 'Site time zone (Universal time + or -)'),
                               'Site elevation (meters)': locationData.get(key = 'Site elevation (meters)'), 
+                              'Sum of Global Plane of Array (W/m^2)': globalPOA.sum(),
+                              'Average of Global Plane of Array (W/m^2)': globalPOA.mean(),
+                              'Average Cell Temperature': cellTemp.mean(),
                               'Avg Rate of Degradation Environmnet': avgOfDegEnv, 
-                              'Sum Rate of Degradation Environmnet': sumOfDegEnv,
                               'Rate Of Degradation Controlled Environmnet': rateOfDegChamber,
                               'Acceleration Factor': accelerationFactor}, 
                                ignore_index=True)

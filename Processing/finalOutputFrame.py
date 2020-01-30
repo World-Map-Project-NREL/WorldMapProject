@@ -433,18 +433,19 @@ class finalOutputFrame:
             hoursRHabove85 = energyCalcs.hoursRH_Above85( level_1_df['Relative humidity'] )
             annual_hoursThatRHabove85_List.append( hoursRHabove85 )
             
-###################################################            
+###################################################  
+            #THESE ARE NOW VANT HOFF CUSTOM CALCS
             #Calculate the Rate of Degradation kenetics with Fischer method on environment
-            level_1_df['Rate of Degradation'] = level_1_df.apply(lambda x: energyCalcs.rateOfDegEnv(x['POA Global'],
-                                                                                                    .64 , 
-                                                                                                    x['Module Temperature(open_rack_cell_glassback)'] ,
-                                                                                                    60 ,
-                                                                                                    1.41 ), 
-                                                                                                axis=1)
-            sumOfDegEnv = level_1_df['Rate of Degradation'].sum(axis = 0, skipna = True)
-            sumOfDegEnv_List.append(sumOfDegEnv)
-            avgOfDegEnv = level_1_df['Rate of Degradation'].mean()
-            avgOfDegEnv_List.append(avgOfDegEnv)
+#            level_1_df['Rate of Degradation'] = level_1_df.apply(lambda x: energyCalcs.rateOfDegEnv(x['POA Global'],
+#                                                                                                    .64 , 
+#                                                                                                    x['Module Temperature(open_rack_cell_glassback)'] ,
+#                                                                                                    60 ,
+#                                                                                                    1.41 ), 
+#                                                                                                axis=1)
+#            sumOfDegEnv = level_1_df['Rate of Degradation'].sum(axis = 0, skipna = True)
+#            sumOfDegEnv_List.append(sumOfDegEnv)
+#            avgOfDegEnv = level_1_df['Rate of Degradation'].mean()
+#            avgOfDegEnv_List.append(avgOfDegEnv)
             
             level_1_df['Power'] = energyCalcs.power(level_1_df['Cell Temperature(open_rack_cell_glassback)'] , level_1_df['POA Global'])
             sumOfPower = level_1_df['Power'].sum(axis = 0, skipna = True)
@@ -692,23 +693,24 @@ class finalOutputFrame:
         ##############################        
         summaryListsAs_df["Sum of Yearly Dew(mmd-1)"] = pd.DataFrame(sumOfHourlyDew_List)
 
-##################################     
+   
         
                 
         summaryListsAs_df["Sum of Relative Power"] = pd.DataFrame(sumOfPower_List)
         summaryListsAs_df["Avg of Relative Power"] = pd.DataFrame(avgOfPower_List)  
         
-        
-        summaryListsAs_df["Sum Rate of Degradation Environment"] = pd.DataFrame(sumOfDegEnv_List)
-        summaryListsAs_df["Avg Rate of Degradation Environment"] = pd.DataFrame(avgOfDegEnv_List)
+##################################  
+#   THESE ARE NOW PART OF         
+#        summaryListsAs_df["Sum Rate of Degradation Environment"] = pd.DataFrame(sumOfDegEnv_List)
+#        summaryListsAs_df["Avg Rate of Degradation Environment"] = pd.DataFrame(avgOfDegEnv_List)
       
         
         #Calculate the rate of Deg of a CHamber *Not Weather data*
-        summaryListsAs_df["Rate of Degradation Chamber"] = energyCalcs.rateOfDegChamber( .64 )
+#        summaryListsAs_df["Rate of Degradation Chamber"] = energyCalcs.rateOfDegChamber( .64 )
         #FInal calculation Mike is interested in
-        summaryListsAs_df["Acceleration Factor"] = summaryListsAs_df.apply(lambda x: energyCalcs.timeOfDeg( x['Rate of Degradation Chamber'] ,
-                                                                                                                                  x['Avg Rate of Degradation Environment'] ),
-                                                                                                                                axis=1)
+   #     summaryListsAs_df["Acceleration Factor"] = summaryListsAs_df.apply(lambda x: energyCalcs.timeOfDeg( x['Rate of Degradation Chamber'] ,
+#                                                                                                                                  x['Avg Rate of Degradation Environment'] ),
+ #                                                                                                                               axis=1)
 ##################################################        
         
 
@@ -739,8 +741,6 @@ class finalOutputFrame:
  
 
 ###################################################################################
-
-
 
 
        # When organizing files the directory saves files alphabetically causing index errors
@@ -794,9 +794,9 @@ class finalOutputFrame:
                                                              'Sum of Relative Power',
                                                              'Avg of Relative Power',
                                                              
-                                                             'Avg Rate of Degradation Environment', 
-                                                             'Sum Rate of Degradation Environment',
-                                                             'Acceleration Factor',
+                                                             #'Avg Rate of Degradation Environment', 
+                                                             #'Sum Rate of Degradation Environment',
+                                                             #'Acceleration Factor',
                                                              
                                                              
                                                              'Annual Minimum Ambient Temperature (C)',
