@@ -20,12 +20,10 @@ import pvlib
 import pickle
 
 #For XLwings ref
-from Processing.cleanRawOutput import cleanRawOutput
 from Processing.energyCalcs import energyCalcs
 from Processing.firstClean import firstClean
 from Processing.utility import utility
 
-#from cleanRawOutput import cleanRawOutput
 #from energyCalcs import energyCalcs
 #from firstClean import firstClean
 #from utility import utility
@@ -79,110 +77,102 @@ class finalOutputFrame:
         #XLWINGS user feedback
         wb = xw.Book(currentDirectory + '\Output_Tool.xlsm')
         mySheet = wb.sheets[0]
-        # Create a list of file names of all the pickles from helper method
+        # Create a list of file names of all the pickles to be processed
         fileNames = utility.filesNameList( currentDirectory , 'rawData' )
-        #Access the first row summary dataframe to pull out arguments for each location
-        # Note: index 0 corresponds to the first file location raw data.    
-        firstRow_summary_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_FirstRows\\firstRowSummary_Of_CSV_Files.pickle')
-        #SITE ELEVATION, sub frame needed for calculating the dew yield
-        #Create a frame of kilometers converted elevation of all data site locations
-        firstRow_summary_df['Site elevation (km)'] = firstRow_summary_df['Site elevation (meters)'].astype(float) / 1000
-        ##############################
-        #Initialize lists outside the for loop,  
-        #these lists will be used when creating a summary frame
-        sumOfHourlyDew_List = []
-        avgWaterVaporPressure_List = []
-        sumWaterVaporPressure_List = []
-        sumOfDegEnv_List = []
-        avgOfDegEnv_List = []
-        sumOfPower_List = []
-        avgOfPower_List = []
-        ##############################   
-        annual_GHI_List = []
-        annual_DNI_List = [] 
-        annual_DHI_List = []
         
-        annual_POA_Global_List = []
-        annual_POA_Direct_List = []
-        annual_POA_Diffuse_List = []
-        annual_POA_SkyDiffuse_List = []
-        annual_POA_GroundDiffuse_List = []
+        finalSummary_df = pd.DataFrame(columns = [   'Site Identifier Code', 
+                                                     'FileName',
+                                                     'Station name',
+                                                     'Station country or political unit',
+                                                     'Station State',
+                                                     'Data Source',
+                                                     'Site latitude',
+                                                     'Site longitude',
+                                                     'Site time zone (Universal time + or -)',
+                                                     'Site elevation (meters)',
+                                                     'Koppen-Geiger climate classification',
+                                                     
+                                                     'Annual Global Horizontal Irradiance (GJ/m^-2)',
+                                                     'Annual Direct Normal Irradiance (GJ/m^-2)',
+                                                     'Annual Diffuse Horizontal Irradiance (GJ/m^-2)',
+                                                     'Annual POA Global Irradiance (GJ/m^-2)',
+                                                     'Annual POA Direct Irradiance (GJ/m^-2)',
+                                                     'Annual POA Diffuse Irradiance (GJ/m^-2)',
+                                                     'Annual POA Sky Diffuse Irradiance (GJ/m^-2)',
+                                                     'Annual POA Ground Diffuse Irradiance (GJ/m^-2)',
+                                                     'Annual Global UV Dose (MJ/y^-1)',
+                                                     'Annual UV Dose at Latitude Tilt (MJ/y^-1)',
+                                                      
+                                                     'Sum of Relative Power',
+                                                     'Avg of Relative Power',
+                                                     
+                                                     'Annual Minimum Ambient Temperature (C)',
+                                                     'Annual Average Ambient Temperature (C)',
+                                                     'Annual Maximum Ambient Temperature (C)',
+                                                     'Annual Range Ambient Temperature (C)',
+                                                     'Average of Yearly Water Vapor Pressure(kPa)',
+                                                     'Sum of Yearly Water Vapor Pressure(kPa)',
+                                                     "Annual number of Hours Relative Humidity > to 85%",
+                                                     'Sum of Yearly Dew(mmd-1)',
+
+                                                     'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_glassback (C)', 
+                                                     'Annual Average (98th Percentile) Module Temperature__open_rack_cell_glassback (C)',
+                                                     'Annual Minimum Module Temperature__open_rack_cell_glassback (C)',
+                                                     'Annual Average Module Temperature__open_rack_cell_glassback (C)',
+                                                     'Annual Maximum Module Temperature__open_rack_cell_glassback (C)',
+                                                     'Annual Range of Module Temperature__open_rack_cell_glassback (C)',
+                                                     
+                                                     'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Average Module Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Range of Module Temperature__roof_mount_cell_glassback (C)',                                                         
+                                                     
+                                                     'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Average Module Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Range of Module Temperature__open_rack_cell_polymerback (C)',                                                         
+                                                     
+                                                     'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Minimum Module Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Average Module Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Maximum Module Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Range of Module Temperature__insulated_back_polymerback (C)',                                                         
+                                                     
+                                                     'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Range of Module Temperature__open_rack_polymer_thinfilm_steel (C)',                                                         
+                                                     
+                                                     'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)',
+                                                     'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)', 
+                                                     'Annual Minimum Module Temperature__22x_concentrator_tracker (C)',
+                                                     'Annual Average Module Temperature__22x_concentrator_tracker (C)',
+                                                     'Annual Maximum Module Temperature__22x_concentrator_tracker (C)',
+                                                     'Annual Range of Module Temperature__22x_concentrator_tracker (C)',
+
+                                                      ])
         
-        annual_Global_UV_Dose_List = []
-        annual_UV_Dose_atLatitude_Tilt_List = []
-        annual_Minimum_Ambient_Temperature_List = []
-        annual_Average_Ambient_Temperature_List = []
-        annual_Maximum_Ambient_Temperature_List = []
-        annual_Ambient_Temperature_Range_List = []
-        
-        annual_hoursThatRHabove85_List = []
-        ##############################    
-        averageCell98th_open_rack_cell_glassback_List = []
-        averageModule98th_open_rack_cell_glassback_List = []
-        annual_Minimum_Module_Temp_open_rack_cell_glassback_List = []
-        annual_Average_Module_Temp_open_rack_cell_glassback_List = []
-        annual_Maximum_Module_Temp_open_rack_cell_glassback_List = []
-        annual_Range_Module_Temp_open_rack_cell_glassback_List = []
-        
-        averageCell98th_roof_mount_cell_glassback_List = []
-        averageModule98th_roof_mount_cell_glassback_List = []   
-        annual_Minimum_Module_Temp_roof_mount_cell_glassback_List = []
-        annual_Average_Module_Temp_roof_mount_cell_glassback_List = []
-        annual_Maximum_Module_Temp_roof_mount_cell_glassback_List = []
-        annual_Range_Module_Temp_roof_mount_cell_glassback_List = []
-         
-        averageCellTemp98th_open_rack_cell_polymerback_List = []
-        averageModule98th_open_rack_cell_polymerback_List = []
-        annual_Minimum_Module_Temp_open_rack_cell_polymerback_List = []
-        annual_Average_Module_Temp_open_rack_cell_polymerback_List = []
-        annual_Maximum_Module_Temp_open_rack_cell_polymerback_List = []
-        annual_Range_Module_Temp_open_rack_cell_polymerback_List = []
-        
-        averageCell98th_insulated_back_polymerback_List = []
-        averageModule98th_insulated_back_polymerback_List = []
-        annual_Minimum_Module_Temp_insulated_back_polymerback_List = []
-        annual_Average_Module_Temp_insulated_back_polymerback_List = []
-        annual_Maximum_Module_Temp_insulated_back_polymerback_List = []
-        annual_Range_Module_Temp_insulated_back_polymerback_List = []
-        
-        averageCell98th_open_rack_polymer_thinfilm_steel_List = []
-        averageModule98th_open_rack_polymer_thinfilm_steel_List = []
-        annual_Minimum_Module_Temp_open_rack_polymer_thinfilm_steel_List = []
-        annual_Average_Module_Temp_open_rack_polymer_thinfilm_steel_List = []
-        annual_Maximum_Module_Temp_open_rack_polymer_thinfilm_steel_List = []
-        annual_Range_Module_Temp_open_rack_polymer_thinfilm_steel_List = []
-        
-        averageCell98th_22x_concentrator_tracker_List = []
-        averageModule98th_22x_concentrator_tracker_List = []
-        annual_Minimum_Module_Temp_22x_concentrator_tracker_List = []
-        annual_Average_Module_Temp_22x_concentrator_tracker_List = []
-        annual_Maximum_Module_Temp_22x_concentrator_tracker_List = []
-        annual_Range_Module_Temp_22x_concentrator_tracker_List = []
-        
-        #Created for sorting data later
-        filePath_List = []
-        dataSource_List = []
-        #Output to the user how many files have been complete
-        wb.sheets[mySheet].range(67,6).value = len(firstRow_summary_df)
-        
-        # Loop through all the raw data files and first row summary frame     
+        #Output to the user how many files need to be processed via XLWings
+        wb.sheets[mySheet].range(67,6).value = len(fileNames)
+          
         for i in range (0 , len(fileNames)):
             
-            # Import the raw dataframe of the individual location to clean and process
+            #Import the aggregated tuple of each site (tuple was aggregated from RawDataImport.class)
             locationData , raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_RawData\\' + fileNames[i])
             latitude = locationData.get(key = 'Site latitude')  
             longitude = locationData.get(key = 'Site longitude')
-            #Pull variables out of FirstRowSummmary data frame to be used as arguments for processing
-            # Pull the arguments latitute and longitude from the first row summary of the first pickle to be processed
-            # First file index i will correspond to row i of the first row summary
-            # i.e row 1 of FirstRowSummary == File 1 being processed
-   #         latitude = float(firstRow_summary_df.loc[i]['Site latitude']) 
-   #         longitude = float(firstRow_summary_df.loc[i]['Site longitude']) 
-            #Correct for Universal Time
-            # From the first Row summary frame pull out the number of hours by 
-            #    which local standard time is ahead or behind Universal Time ( + or -)
-   #         hoursAheadOrBehind = float(firstRow_summary_df.iloc[i]['Site time zone (Universal time + or -)'])
-            hoursAheadOrBehind = locationData.get(key = 'Site time zone (Universal time + or -)')
+            
+            level_1_df = raw_df
+            
+            #hoursAheadorBehind will be the number of hours ahead or behind universal time
+#            hoursAheadOrBehind = locationData.get(key = 'Site time zone (Universal time + or -)')
             #If the latitude is in the southern hemisphere of the globe then surface azimuth of the panel must be 0 degrees
             if latitude <= 0:
                 surface_azimuth = 0
@@ -193,7 +183,7 @@ class finalOutputFrame:
             # PVlib requires the latitude tilt to always be positve for its irradiance calculations
             surface_tilt = abs(latitude)        
 
-            level_1_df = firstClean.cleanedFrame( raw_df , hoursAheadOrBehind , longitude )
+#            level_1_df = firstClean.cleanedFrame( raw_df , hoursAheadOrBehind , longitude )
             ################  
             # Calculate the Solar Position
             # Create a dataframe of solar parameter from pvlib using NREL spa algorithm
@@ -204,18 +194,9 @@ class finalOutputFrame:
                                                                                      pressure=None, 
                                                                                      method='nrel_numba', 
                                                                                      temperature=12 ) 
-            # Add onto the level 1 frame
             level_1_df['Solar Zenith'] = solarPosition_df['zenith'].values
             level_1_df['Solar Azimuth'] = solarPosition_df['azimuth'].values
             level_1_df['Solar Elevation'] = solarPosition_df['elevation'].values
-            
-            
-            
-########################################################################            
-       #TO DO: We need to make this into a function relative to optimal tilt and azimuth...     
-            
-
-            
             
             # Calculates the angle of incidence of the solar vector on a surface. 
             # This is the angle between the solar vector and the surface normal.
@@ -238,17 +219,14 @@ class finalOutputFrame:
                                                                              surface_type=None, 
                                                                              model= 'isotropic', 
                                                                              model_perez='allsitescomposite1990')   
-        
-            #Add the new data as new columns of the level_1_data
             level_1_df['POA Diffuse'] = totalIrradiance_df['poa_diffuse'].values
             level_1_df['POA Direct'] = totalIrradiance_df['poa_direct'].values
             level_1_df['POA Global'] = totalIrradiance_df['poa_global'].values
             level_1_df['POA Ground Diffuse'] = totalIrradiance_df['poa_ground_diffuse'].values
             level_1_df['POA Sky Diffuse'] = totalIrradiance_df['poa_sky_diffuse'].values
             ##############################
-            # Calculate the temperatures of the module and then find the top 98% 
             # Calculate the Module/Cell Temperature for different configurations
-            # using the king model 
+            # using the King model from pvlib
     
             #’open_rack_cell_glassback’ OUTPUT = Module Temperature/Cell Temperature(C)
             temp_open_rack_cell_glassback_df = pvlib.pvsystem.sapm_celltemp(level_1_df['POA Global'],
@@ -298,13 +276,11 @@ class finalOutputFrame:
             
             level_1_df['Cell Temperature(22x_concentrator_tracker)'] = temp_22x_concentrator_tracker_df['temp_cell'].values.tolist()
             level_1_df['Module Temperature(22x_concentrator_tracker)'] = temp_22x_concentrator_tracker_df['temp_module'].values.tolist()        
-            # Calculate the top 2% of temperature per location and save the average into a summary list
-            #  Will need to add this list to the summary dataframe
+
             # Calculate the top 2% 
             #Determine how many elements are equal to 2% of the length of the data
             top2Precent = int( len( level_1_df ) * .02 )
-            # Pull out the top 2% of the data.  for 8760 points it will take the highest 175 values, 
-            # These lists will be used in the final summary frame.          
+            # Pull out the top 2% of the data.  8760 points will take the highest 175 values          
             open_rack_cell_glassback_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(open_rack_cell_glassback)' ) 
             open_rack_cell_glassback_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(open_rack_cell_glassback)' )
             ##############################            
@@ -324,229 +300,140 @@ class finalOutputFrame:
             _22x_concentrator_tracker_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(22x_concentrator_tracker)' )        
 
             # Find the average of the top 98th percentile for Module/Cell Temperature 
-            # This average will be used to plot each location on the map
+            average98Cell_open_rack_cell_glassback = open_rack_cell_glassback_top2Precent_Cell_Temp['Cell Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
+            average98Module_open_rack_cell_glassback = open_rack_cell_glassback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
+            ##############################            
+            average98Cell_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Cell_Temp['Cell Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True) 
+            average98Module_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Module_Temp['Module Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True)         
+            ##############################            
+            average98CellTemp_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Cell_Temp['Cell Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True) 
+            average98Module_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True)         
+            ##############################            
+            average98Cell_insulated_back_polymerback = insulated_back_polymerback_top2Precent_Cell_Temp['Cell Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True) 
+            average98Module_insulated_back_polymerback =  insulated_back_polymerback_top2Precent_Module_Temp['Module Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True)         
+            ##############################            
+            average98Cell_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Cell_Temp['Cell Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True) 
+            average98Module_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Module_Temp['Module Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True)         
+            ##############################            
+            average98Cell_22x_concentrator_tracker = _22x_concentrator_tracker_top2Precent_Cell_Temp['Cell Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True) 
+            average98Module_22x_concentrator_tracker = _22x_concentrator_tracker_top2Precent_Module_Temp['Module Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True)         
+
             
-            averageCell_open_rack_cell_glassback = open_rack_cell_glassback_top2Precent_Cell_Temp['Cell Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
-            averageModule_open_rack_cell_glassback = open_rack_cell_glassback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
-            ##############################            
-            averageCell_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Cell_Temp['Cell Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True) 
-            averageModule_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Module_Temp['Module Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True)         
-            ##############################            
-            averageCellTemp_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Cell_Temp['Cell Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True) 
-            averageModule_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True)         
-            ##############################            
-            averageCell_insulated_back_polymerback = insulated_back_polymerback_top2Precent_Cell_Temp['Cell Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True) 
-            averageModule_insulated_back_polymerback =  insulated_back_polymerback_top2Precent_Module_Temp['Module Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True)         
-            ##############################            
-            averageCell_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Cell_Temp['Cell Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True) 
-            averageModule_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Module_Temp['Module Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True)         
-            ##############################            
-            averageCell_22x_concentrator_tracker = _22x_concentrator_tracker_top2Precent_Cell_Temp['Cell Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True) 
-            averageModule_22x_concentrator_tracker = _22x_concentrator_tracker_top2Precent_Module_Temp['Module Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True)         
-            
-            # Add the 98th percentile temperature averages to these lists to output to the summary frame
-            # These will be a list of every location once the loop ends
-            
-            averageCell98th_open_rack_cell_glassback_List.append(averageCell_open_rack_cell_glassback)
-            averageModule98th_open_rack_cell_glassback_List.append(averageModule_open_rack_cell_glassback)
-            ##############################            
-            averageCell98th_roof_mount_cell_glassback_List.append(averageCell_roof_mount_cell_glassback)
-            averageModule98th_roof_mount_cell_glassback_List.append(averageModule_roof_mount_cell_glassback)        
-            ##############################     
-            averageCellTemp98th_open_rack_cell_polymerback_List.append(averageCellTemp_open_rack_cell_polymerback)
-            averageModule98th_open_rack_cell_polymerback_List.append(averageModule_open_rack_cell_polymerback)
-            ##############################    
-            averageCell98th_insulated_back_polymerback_List.append(averageCell_insulated_back_polymerback)
-            averageModule98th_insulated_back_polymerback_List.append(averageModule_insulated_back_polymerback)
-            ##############################    
-            averageCell98th_open_rack_polymer_thinfilm_steel_List.append(averageCell_open_rack_polymer_thinfilm_steel)
-            averageModule98th_open_rack_polymer_thinfilm_steel_List.append(averageModule_open_rack_polymer_thinfilm_steel)
-            ##############################    
-            averageCell98th_22x_concentrator_tracker_List.append(averageCell_22x_concentrator_tracker)
-            averageModule98th_22x_concentrator_tracker_List.append(averageModule_22x_concentrator_tracker)
-    
             #Calculate the dew point yield for each location.  Find the sum of all hourly data for a yearly yield
-            siteElevation = firstRow_summary_df['Site elevation (km)'][i]
+            siteElevation = locationData.get(key = 'Site elevation (meters)')/1000 #Dew Yield function requires kilometers
+            level_1_df['Dew Yield'] = energyCalcs.dewYield( siteElevation ,
+                                                           level_1_df['Dew-point temperature'].values, 
+                                                           level_1_df['Dry-bulb temperature'].values ,
+                                                           level_1_df['Wind speed'].values ,
+                                                           level_1_df['Total sky cover(okta)'].values)  
+            #If the values from Dew Yield Calc are less than 0 replace with 0, "can not have negative dew yield"
+            level_1_df['Dew Yield'].values[level_1_df['Dew Yield'].values < 0] = 0
             
-            level_1_df['Dew Yield'] = level_1_df.apply(lambda x: energyCalcs.dewYield( siteElevation ,
-                                                           x['Dew-point temperature'], 
-                                                           x['Dry-bulb temperature'] ,
-                                                           x['Wind speed'] ,
-                                                           x['Total sky cover(okta)']), axis=1 )
-            #If the hourly dew yield is a negative number then replace the negative number with 0
-            level_1_df['Dew Yield'] = level_1_df['Dew Yield'].apply(lambda x: 0.0 if x <= 0 else x)
+
             #get the sum of all the dew produced that year.  
             sumOfHourlyDew = level_1_df['Dew Yield'].sum(axis = 0, skipna = True)
-            sumOfHourlyDew_List.append(sumOfHourlyDew)
-            #Annual Water Vapor Pressure Average/Sum
-            level_1_df['Water Vapor Pressure (kPa)'] = level_1_df.apply(lambda x: energyCalcs.waterVaporPressure( 
-                                                           x['Dew-point temperature'], 
-                                                           ), axis=1 )
-            avgWaterVaporPressure = level_1_df['Water Vapor Pressure (kPa)'].mean(skipna = True)
-            avgWaterVaporPressure_List.append( avgWaterVaporPressure )            
-            sumWaterVaporPressure = level_1_df['Water Vapor Pressure (kPa)'].sum(skipna = True)
-            sumWaterVaporPressure_List.append( sumWaterVaporPressure )      
+            
+            level_1_df['Water Vapor Pressure (kPa)'] = energyCalcs.waterVaporPressure( raw_df['Dew-point temperature'] )         
+            avgWaterVaporPressure = level_1_df['Water Vapor Pressure (kPa)'].mean(skipna = True)         
+            sumWaterVaporPressure = level_1_df['Water Vapor Pressure (kPa)'].sum(skipna = True)      
             #Calculate the sum of yearly GHI
             sumOfGHI = energyCalcs.whToGJ( level_1_df['Global horizontal irradiance'].sum(axis = 0, skipna = True) )
-            annual_GHI_List.append( sumOfGHI )
             #Calculate the sum of yearly DNI
             sumOfDNI = energyCalcs.whToGJ( level_1_df['Direct normal irradiance'].sum(axis = 0, skipna = True) )
-            annual_DNI_List.append( sumOfDNI )
             #Calculate the sum of yearly DHI
             sumOfDHI = energyCalcs.whToGJ( level_1_df['Diffuse horizontal irradiance'].sum(axis = 0, skipna = True) )
-            annual_DHI_List.append( sumOfDHI )
             #Calculate the sum of yearly POA global
             sumOfPOA_Global = energyCalcs.whToGJ( totalIrradiance_df['poa_global'].sum(axis = 0, skipna = True) )
-            annual_POA_Global_List.append( sumOfPOA_Global )
             #Calculate the sum of yearly POA Direct
             sumOfPOA_Direct = energyCalcs.whToGJ( totalIrradiance_df['poa_direct'].sum(axis = 0, skipna = True) )
-            annual_POA_Direct_List.append( sumOfPOA_Direct )
             #Calculate the sum of yearly POA Diffuse
             sumOfPOA_Diffuse = energyCalcs.whToGJ( totalIrradiance_df['poa_diffuse'].sum(axis = 0, skipna = True) )
-            annual_POA_Diffuse_List.append( sumOfPOA_Diffuse )
             #Calculate the sum of yearly POA Sky Diffuse
             sumOfPOA_SkyDiffuse = energyCalcs.whToGJ( totalIrradiance_df['poa_sky_diffuse'].sum(axis = 0, skipna = True) )
-            annual_POA_SkyDiffuse_List.append( sumOfPOA_SkyDiffuse )
             #Calculate the sum of yearly POA Ground Diffuse
             sumOfPOA_GroundDiffuse = energyCalcs.whToGJ( totalIrradiance_df['poa_ground_diffuse'].sum(axis = 0, skipna = True) )
-            annual_POA_GroundDiffuse_List.append( sumOfPOA_GroundDiffuse )
             #Calculate the Global UV Dose, 5% of the annual GHI
             global_UV_Dose = energyCalcs.gJtoMJ( sumOfGHI * .05 )
-            annual_Global_UV_Dose_List.append( global_UV_Dose )
             #Calculate the annual UV Dose at Latitude Tilt, 5% of the annual GHI
             #Estimate as 5% of global plane of irradiance
             sumOfPOA_Global = energyCalcs.gJtoMJ( energyCalcs.whToGJ(level_1_df['POA Global'].sum(axis = 0, skipna = True) ) )
             uV_Dose_atLatitude_Tilt = sumOfPOA_Global * .05
-            annual_UV_Dose_atLatitude_Tilt_List.append( uV_Dose_atLatitude_Tilt )
             #Calculate the annual minimum ambient temperature
             minimum_Ambient_Temperature = level_1_df['Dry-bulb temperature'].min()
-            annual_Minimum_Ambient_Temperature_List.append( minimum_Ambient_Temperature )
             #Calculate the annual average ambient temperature
             average_Ambient_Temperature = level_1_df['Dry-bulb temperature'].mean()
-            annual_Average_Ambient_Temperature_List.append( average_Ambient_Temperature )
             #Calculate the annual maximum ambient temperature
             maximum_Ambient_Temperature = level_1_df['Dry-bulb temperature'].max()
-            annual_Maximum_Ambient_Temperature_List.append( maximum_Ambient_Temperature )
             #Calculate the annual range ambient temperature
-            ambient_Temperature_Range = maximum_Ambient_Temperature - minimum_Ambient_Temperature
-            annual_Ambient_Temperature_Range_List.append( ambient_Temperature_Range )                                                     
+            ambient_Temperature_Range = maximum_Ambient_Temperature - minimum_Ambient_Temperature                                                    
             hoursRHabove85 = energyCalcs.hoursRH_Above85( level_1_df['Relative humidity'] )
-            annual_hoursThatRHabove85_List.append( hoursRHabove85 )
             
-###################################################  
-            #THESE ARE NOW VANT HOFF CUSTOM CALCS
-            #Calculate the Rate of Degradation kenetics with Fischer method on environment
-#            level_1_df['Rate of Degradation'] = level_1_df.apply(lambda x: energyCalcs.rateOfDegEnv(x['POA Global'],
-#                                                                                                    .64 , 
-#                                                                                                    x['Module Temperature(open_rack_cell_glassback)'] ,
-#                                                                                                    60 ,
-#                                                                                                    1.41 ), 
-#                                                                                                axis=1)
-#            sumOfDegEnv = level_1_df['Rate of Degradation'].sum(axis = 0, skipna = True)
-#            sumOfDegEnv_List.append(sumOfDegEnv)
-#            avgOfDegEnv = level_1_df['Rate of Degradation'].mean()
-#            avgOfDegEnv_List.append(avgOfDegEnv)
-            
+            # Relative Power calculations 
             level_1_df['Power'] = energyCalcs.power(level_1_df['Cell Temperature(open_rack_cell_glassback)'] , level_1_df['POA Global'])
             sumOfPower = level_1_df['Power'].sum(axis = 0, skipna = True)
-            sumOfPower_List.append(sumOfPower)
             avgOfPower = level_1_df['Power'].mean()          
-            avgOfPower_List.append(avgOfPower)            
 
-
-            
-###################################################            
-            
-            
-            #Solar Module fixture type paramerters
+            #########
+            #Solar Module fixture temperature summary stats
             ##############################
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_open_rack_cell_glassback = level_1_df['Module Temperature(open_rack_cell_glassback)'].min()
-            annual_Minimum_Module_Temp_open_rack_cell_glassback_List.append( minimum_Module_Temp_open_rack_cell_glassback )
             #Calculate the annual average ambient temperature        
             average_Module_Temp_open_rack_cell_glassback = level_1_df['Module Temperature(open_rack_cell_glassback)'].mean()
-            annual_Average_Module_Temp_open_rack_cell_glassback_List.append( average_Module_Temp_open_rack_cell_glassback )
             #Calculate the annual maximum ambient temperature        
             maximum_Module_Temp_open_rack_cell_glassback = level_1_df['Module Temperature(open_rack_cell_glassback)'].max()
-            annual_Maximum_Module_Temp_open_rack_cell_glassback_List.append( maximum_Module_Temp_open_rack_cell_glassback )
             #Calculate the annual range ambient temperature        
             range_Module_Temp_open_rack_cell_glassback = maximum_Module_Temp_open_rack_cell_glassback - minimum_Module_Temp_open_rack_cell_glassback
-            annual_Range_Module_Temp_open_rack_cell_glassback_List.append ( range_Module_Temp_open_rack_cell_glassback )
             ##############################            
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_roof_mount_cell_glassback = level_1_df['Module Temperature(roof_mount_cell_glassback)'].min()
-            annual_Minimum_Module_Temp_roof_mount_cell_glassback_List.append( minimum_Module_Temp_roof_mount_cell_glassback )
             #Calculate the annual average ambient temperature        
             average_Module_Temp_roof_mount_cell_glassback = level_1_df['Module Temperature(roof_mount_cell_glassback)'].mean()
-            annual_Average_Module_Temp_roof_mount_cell_glassback_List.append( average_Module_Temp_roof_mount_cell_glassback )
             #Calculate the annual maximum ambient temperature        
             maximum_Module_Temp_roof_mount_cell_glassback = level_1_df['Module Temperature(roof_mount_cell_glassback)'].max()
-            annual_Maximum_Module_Temp_roof_mount_cell_glassback_List.append( maximum_Module_Temp_roof_mount_cell_glassback )
             #Calculate the annual range ambient temperature        
             range_Module_Temp_roof_mount_cell_glassback = maximum_Module_Temp_roof_mount_cell_glassback - minimum_Module_Temp_roof_mount_cell_glassback
-            annual_Range_Module_Temp_roof_mount_cell_glassback_List.append ( range_Module_Temp_roof_mount_cell_glassback )
             ##############################            
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_open_rack_cell_polymerback = level_1_df['Module Temperature(open_rack_cell_polymerback)'].min()
-            annual_Minimum_Module_Temp_open_rack_cell_polymerback_List.append( minimum_Module_Temp_open_rack_cell_polymerback )
             #Calculate the annual average ambient temperature        
             average_Module_Temp_open_rack_cell_polymerback = level_1_df['Module Temperature(open_rack_cell_polymerback)'].mean()
-            annual_Average_Module_Temp_open_rack_cell_polymerback_List.append( average_Module_Temp_open_rack_cell_polymerback )
             #Calculate the annual maximum ambient temperature        
             maximum_Module_Temp_open_rack_cell_polymerback = level_1_df['Module Temperature(open_rack_cell_polymerback)'].max()
-            annual_Maximum_Module_Temp_open_rack_cell_polymerback_List.append( maximum_Module_Temp_open_rack_cell_polymerback )
             #Calculate the annual range ambient temperature        
             range_Module_Temp_open_rack_cell_polymerback = maximum_Module_Temp_open_rack_cell_polymerback - minimum_Module_Temp_open_rack_cell_polymerback
-            annual_Range_Module_Temp_open_rack_cell_polymerback_List.append ( range_Module_Temp_open_rack_cell_polymerback )
             ##############################                    
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_insulated_back_polymerback = level_1_df['Module Temperature(insulated_back_polymerback)'].min()
-            annual_Minimum_Module_Temp_insulated_back_polymerback_List.append( minimum_Module_Temp_insulated_back_polymerback )
             #Calculate the annual average ambient temperature        
             average_Module_Temp_insulated_back_polymerback = level_1_df['Module Temperature(insulated_back_polymerback)'].mean()
-            annual_Average_Module_Temp_insulated_back_polymerback_List.append( average_Module_Temp_insulated_back_polymerback )
             #Calculate the annual maximum ambient temperature        
             maximum_Module_Temp_insulated_back_polymerback = level_1_df['Module Temperature(insulated_back_polymerback)'].max()
-            annual_Maximum_Module_Temp_insulated_back_polymerback_List.append( maximum_Module_Temp_insulated_back_polymerback )
             #Calculate the annual range ambient temperature        
             range_Module_Temp_insulated_back_polymerback = maximum_Module_Temp_insulated_back_polymerback - minimum_Module_Temp_insulated_back_polymerback
-            annual_Range_Module_Temp_insulated_back_polymerback_List.append ( range_Module_Temp_insulated_back_polymerback )
             ##############################            
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_open_rack_polymer_thinfilm_steel = level_1_df['Module Temperature(open_rack_polymer_thinfilm_steel)'].min()
-            annual_Minimum_Module_Temp_open_rack_polymer_thinfilm_steel_List.append( minimum_Module_Temp_open_rack_polymer_thinfilm_steel )
             #Calculate the annual average ambient temperature        
             average_Module_Temp_open_rack_polymer_thinfilm_steel = level_1_df['Module Temperature(open_rack_polymer_thinfilm_steel)'].mean()
-            annual_Average_Module_Temp_open_rack_polymer_thinfilm_steel_List.append( average_Module_Temp_open_rack_polymer_thinfilm_steel )
             #Calculate the annual maximum ambient temperature        
             maximum_Module_Temp_open_rack_polymer_thinfilm_steel = level_1_df['Module Temperature(open_rack_polymer_thinfilm_steel)'].max()
-            annual_Maximum_Module_Temp_open_rack_polymer_thinfilm_steel_List.append( maximum_Module_Temp_open_rack_polymer_thinfilm_steel )
             #Calculate the annual range ambient temperature        
             range_Module_Temp_open_rack_polymer_thinfilm_steel = maximum_Module_Temp_open_rack_polymer_thinfilm_steel - minimum_Module_Temp_open_rack_polymer_thinfilm_steel
-            annual_Range_Module_Temp_open_rack_polymer_thinfilm_steel_List.append ( range_Module_Temp_open_rack_polymer_thinfilm_steel )
             ##############################                    
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_22x_concentrator_tracker = level_1_df['Module Temperature(22x_concentrator_tracker)'].min()
-            annual_Minimum_Module_Temp_22x_concentrator_tracker_List.append( minimum_Module_Temp_22x_concentrator_tracker )
             #Calculate the annual average ambient temperature        
             average_Module_Temp_22x_concentrator_tracker = level_1_df['Module Temperature(22x_concentrator_tracker)'].mean()
-            annual_Average_Module_Temp_22x_concentrator_tracker_List.append( average_Module_Temp_22x_concentrator_tracker )
             #Calculate the annual maximum ambient temperature        
             maximum_Module_Temp_22x_concentrator_tracker = level_1_df['Module Temperature(22x_concentrator_tracker)'].max()
-            annual_Maximum_Module_Temp_22x_concentrator_tracker_List.append( maximum_Module_Temp_22x_concentrator_tracker )
             #Calculate the annual range ambient temperature        
             range_Module_Temp_22x_concentrator_tracker = maximum_Module_Temp_22x_concentrator_tracker - minimum_Module_Temp_22x_concentrator_tracker
-            annual_Range_Module_Temp_22x_concentrator_tracker_List.append ( range_Module_Temp_22x_concentrator_tracker )
- 
-            #Search the string and determine if the data is TMY3, CWEC, or IWEC
-            dataSource_List.append( utility.dataSource(fileNames[i]) )
-            
+
             # Add the data source to the location data description
             dataSource = pd.Series( utility.dataSource(fileNames[i]), index=['Data Source'])
             locationData = locationData.append( dataSource )
-            #Copy individual data source into each site location data
-            #List of unique identifiers for reference
-            filePath_List.append(fileNames[i])
+
             level_1_df = level_1_df.reindex(columns = ['Local Date Time',
                                                        'Universal Date Time',
                                                        'Local Solar Time',
@@ -590,7 +477,7 @@ class finalOutputFrame:
                                                        'Cell Temperature(22x_concentrator_tracker)',
                                                        'Module Temperature(22x_concentrator_tracker)'                                                       
                                                        ]) 
-             #Put metrics in the final column names
+            #Put metrics in the final column names
             level_1_df.rename(columns = { 'Albedo' :'Albedo(ratio of reflected solar irradiance to GHI)', 
                                           'Corrected Albedo':'Corrected Albedo(ratio of reflected solar irradiance to GHI)', 
                                           'Dry-bulb temperature':'Dry-bulb temperature(C)',
@@ -628,230 +515,101 @@ class finalOutputFrame:
                                           'Cell Temperature(22x_concentrator_tracker)':'Cell Temperature(22x_concentrator_tracker)(C)', 
                                           'Module Temperature(22x_concentrator_tracker)':'Module Temperature(22x_concentrator_tracker)(C)'
                                           }, inplace = True)
-            #Store the level 1 processed Data into the tuple as a pickle file
+    
+            #Store the level 1 processed Data into a tuple as a pickle file
             level1_tuple = ( locationData , level_1_df )
             with open(currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[i], 'wb') as f:
                 pickle.dump(level1_tuple, f)
+
+            #########
+            #LEVEL 1 SITE SPECIFC DATAFRAME COMPLETE
+            #########
+        
+            # Create a summary frame of all locations
+    
+            finalSummary_df = finalSummary_df.append({'Site Identifier Code':  locationData.get(key = 'Site Identifier Code'), 
+                                                      'FileName': locationData.get(key = 'FileName'),
+                                                      'Station name': locationData.get(key = 'Station name'),  
+                                                      'Station country or political unit': locationData.get(key = 'Station country or political unit'),
+                                                      'Station State': locationData.get(key = 'Station State'),
+                                                      'Data Source': locationData.get(key = 'Data Source'), 
+                                                      'Site latitude': locationData.get(key = 'Site latitude'), 
+                                                      'Site longitude': locationData.get(key = 'Site longitude'),
+                                                      'Site time zone (Universal time + or -)': locationData.get(key = 'Site time zone (Universal time + or -)'),
+                                                      'Site elevation (meters)': locationData.get(key = 'Site elevation (meters)'),
+                                                      'Koppen-Geiger climate classification': locationData.get(key = 'Koppen-Geiger climate classification'),
+                                                      
+                                                      'Annual Global Horizontal Irradiance (GJ/m^-2)':sumOfGHI,
+                                                      'Annual Direct Normal Irradiance (GJ/m^-2)':sumOfDNI,
+                                                      'Annual Diffuse Horizontal Irradiance (GJ/m^-2)':sumOfDHI,
+                                                      'Annual POA Global Irradiance (GJ/m^-2)':sumOfPOA_Global,
+                                                      'Annual POA Direct Irradiance (GJ/m^-2)':sumOfPOA_Direct,
+                                                      'Annual POA Diffuse Irradiance (GJ/m^-2)':sumOfPOA_Diffuse,
+                                                      'Annual POA Sky Diffuse Irradiance (GJ/m^-2)':sumOfPOA_SkyDiffuse,
+                                                      'Annual POA Ground Diffuse Irradiance (GJ/m^-2)':sumOfPOA_GroundDiffuse,
+                                                      'Annual Global UV Dose (MJ/y^-1)':global_UV_Dose,
+                                                      'Annual UV Dose at Latitude Tilt (MJ/y^-1)':uV_Dose_atLatitude_Tilt,
+                                                      
+                                                      'Sum of Relative Power':sumOfPower,
+                                                      'Avg of Relative Power':avgOfPower,
+                                                     
+                                                      'Annual Minimum Ambient Temperature (C)':minimum_Ambient_Temperature,
+                                                      'Annual Average Ambient Temperature (C)':average_Ambient_Temperature,
+                                                      'Annual Maximum Ambient Temperature (C)':maximum_Ambient_Temperature,
+                                                      'Annual Range Ambient Temperature (C)':ambient_Temperature_Range,
+                                                      'Average of Yearly Water Vapor Pressure(kPa)':avgWaterVaporPressure,
+                                                      'Sum of Yearly Water Vapor Pressure(kPa)':sumWaterVaporPressure,
+                                                      "Annual number of Hours Relative Humidity > to 85%":hoursRHabove85,
+                                                      'Sum of Yearly Dew(mmd-1)':sumOfHourlyDew,
+    
+                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_glassback (C)':average98Cell_open_rack_cell_glassback, 
+                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_cell_glassback (C)':average98Module_open_rack_cell_glassback,
+                                                      'Annual Minimum Module Temperature__open_rack_cell_glassback (C)':minimum_Module_Temp_open_rack_cell_glassback,
+                                                      'Annual Average Module Temperature__open_rack_cell_glassback (C)':average_Module_Temp_open_rack_cell_glassback,
+                                                      'Annual Maximum Module Temperature__open_rack_cell_glassback (C)':maximum_Module_Temp_open_rack_cell_glassback,
+                                                      'Annual Range of Module Temperature__open_rack_cell_glassback (C)':range_Module_Temp_open_rack_cell_glassback,
+                                                     
+                                                      'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)':average98Cell_roof_mount_cell_glassback,
+                                                      'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)':average98Module_roof_mount_cell_glassback,
+                                                      'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)':minimum_Module_Temp_roof_mount_cell_glassback,
+                                                      'Annual Average Module Temperature__roof_mount_cell_glassback (C)':average_Module_Temp_roof_mount_cell_glassback,
+                                                      'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)':maximum_Module_Temp_roof_mount_cell_glassback,
+                                                      'Annual Range of Module Temperature__roof_mount_cell_glassback (C)':range_Module_Temp_roof_mount_cell_glassback,                                                         
+                                                     
+                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)':average98CellTemp_open_rack_cell_polymerback,
+                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)':average98Module_open_rack_cell_polymerback,
+                                                      'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)':minimum_Module_Temp_open_rack_cell_polymerback,
+                                                      'Annual Average Module Temperature__open_rack_cell_polymerback (C)':average_Module_Temp_open_rack_cell_polymerback,
+                                                      'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)':maximum_Module_Temp_open_rack_cell_polymerback,
+                                                      'Annual Range of Module Temperature__open_rack_cell_polymerback (C)':range_Module_Temp_open_rack_cell_polymerback,                                                         
+                                                     
+                                                      'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)':average98Cell_insulated_back_polymerback,
+                                                      'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)':average98Module_insulated_back_polymerback,
+                                                      'Annual Minimum Module Temperature__insulated_back_polymerback (C)': minimum_Module_Temp_insulated_back_polymerback,
+                                                      'Annual Average Module Temperature__insulated_back_polymerback (C)':average_Module_Temp_insulated_back_polymerback,
+                                                      'Annual Maximum Module Temperature__insulated_back_polymerback (C)':maximum_Module_Temp_insulated_back_polymerback,
+                                                      'Annual Range of Module Temperature__insulated_back_polymerback (C)':range_Module_Temp_insulated_back_polymerback,                                                         
+                                                     
+                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)':average98Cell_open_rack_polymer_thinfilm_steel,
+                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)':average98Module_open_rack_polymer_thinfilm_steel,
+                                                      'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)':minimum_Module_Temp_open_rack_polymer_thinfilm_steel,
+                                                      'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)':average_Module_Temp_open_rack_polymer_thinfilm_steel,
+                                                      'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)':maximum_Module_Temp_open_rack_polymer_thinfilm_steel ,
+                                                      'Annual Range of Module Temperature__open_rack_polymer_thinfilm_steel (C)':range_Module_Temp_open_rack_polymer_thinfilm_steel,                                                         
+                                                     
+                                                      'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)':average98Cell_22x_concentrator_tracker,
+                                                      'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)':average98Module_22x_concentrator_tracker, 
+                                                      'Annual Minimum Module Temperature__22x_concentrator_tracker (C)':minimum_Module_Temp_22x_concentrator_tracker,
+                                                      'Annual Average Module Temperature__22x_concentrator_tracker (C)':average_Module_Temp_22x_concentrator_tracker,
+                                                      'Annual Maximum Module Temperature__22x_concentrator_tracker (C)':maximum_Module_Temp_22x_concentrator_tracker,
+                                                      'Annual Range of Module Temperature__22x_concentrator_tracker (C)':range_Module_Temp_22x_concentrator_tracker
+
+                                                      }, 
+                                                   ignore_index=True)             
+
             #Output to the user how many files have been complete
             wb.sheets[mySheet].range(67,4).value = i + 1
-            ################  
-            # Level 1 Data frame complete
-            ################            
-            
-        #SUMMARY FRAME
-
-        #Store the processed information into its own frame   
-        summaryListsAs_df = pd.DataFrame()    
-        ##############################            
-        #Update summary sheet with summary stats collected by lists inside the for loop
-        summaryListsAs_df["Annual Average (98th Percentile) Cell Temperature__open_rack_cell_glassback (C)"] = averageCell98th_open_rack_cell_glassback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__open_rack_cell_glassback (C)"] = averageModule98th_open_rack_cell_glassback_List
-        summaryListsAs_df["Annual Minimum Module Temperature__open_rack_cell_glassback (C)"] = annual_Minimum_Module_Temp_open_rack_cell_glassback_List
-        summaryListsAs_df["Annual Average Module Temperature__open_rack_cell_glassback (C)"] = annual_Average_Module_Temp_open_rack_cell_glassback_List
-        summaryListsAs_df["Annual Maximum Module Temperature__open_rack_cell_glassback (C)"] = annual_Maximum_Module_Temp_open_rack_cell_glassback_List
-        summaryListsAs_df["Annual Range of Module Temperature__open_rack_cell_glassback (C)"] = annual_Range_Module_Temp_open_rack_cell_glassback_List
-        ##############################              
-        summaryListsAs_df["Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)"] = averageCell98th_roof_mount_cell_glassback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)"] = averageModule98th_roof_mount_cell_glassback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)"] = averageModule98th_roof_mount_cell_glassback_List
-        summaryListsAs_df["Annual Minimum Module Temperature__roof_mount_cell_glassback (C)"] = annual_Minimum_Module_Temp_roof_mount_cell_glassback_List
-        summaryListsAs_df["Annual Average Module Temperature__roof_mount_cell_glassback (C)"] = annual_Average_Module_Temp_roof_mount_cell_glassback_List
-        summaryListsAs_df["Annual Maximum Module Temperature__roof_mount_cell_glassback (C)"] = annual_Maximum_Module_Temp_roof_mount_cell_glassback_List
-        summaryListsAs_df["Annual Range of Module Temperature__roof_mount_cell_glassback (C)"] = annual_Range_Module_Temp_roof_mount_cell_glassback_List
-        ##############################          
-        summaryListsAs_df["Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)"] = averageCellTemp98th_open_rack_cell_polymerback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)"] = averageModule98th_open_rack_cell_polymerback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)"] = averageModule98th_open_rack_cell_polymerback_List
-        summaryListsAs_df["Annual Minimum Module Temperature__open_rack_cell_polymerback (C)"] = annual_Minimum_Module_Temp_open_rack_cell_polymerback_List
-        summaryListsAs_df["Annual Average Module Temperature__open_rack_cell_polymerback (C)"] = annual_Average_Module_Temp_open_rack_cell_polymerback_List
-        summaryListsAs_df["Annual Maximum Module Temperature__open_rack_cell_polymerback (C)"] = annual_Maximum_Module_Temp_open_rack_cell_polymerback_List
-        summaryListsAs_df["Annual Range of Module Temperature__open_rack_cell_polymerback (C)"] = annual_Range_Module_Temp_open_rack_cell_polymerback_List
-        ##############################          
-        summaryListsAs_df["Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)"] = averageCell98th_insulated_back_polymerback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)"] = averageModule98th_insulated_back_polymerback_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)"] = averageModule98th_insulated_back_polymerback_List
-        summaryListsAs_df["Annual Minimum Module Temperature__insulated_back_polymerback (C)"] = annual_Minimum_Module_Temp_insulated_back_polymerback_List
-        summaryListsAs_df["Annual Average Module Temperature__insulated_back_polymerback (C)"] = annual_Average_Module_Temp_insulated_back_polymerback_List
-        summaryListsAs_df["Annual Maximum Module Temperature__insulated_back_polymerback (C)"] = annual_Maximum_Module_Temp_insulated_back_polymerback_List
-        summaryListsAs_df["Annual Range of Module Temperature__insulated_back_polymerback (C)"] = annual_Range_Module_Temp_insulated_back_polymerback_List
-        ##############################          
-        summaryListsAs_df["Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)"] = averageCell98th_open_rack_polymer_thinfilm_steel_List 
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)"] = averageModule98th_open_rack_polymer_thinfilm_steel_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)"] = averageModule98th_open_rack_polymer_thinfilm_steel_List
-        summaryListsAs_df["Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)"] = annual_Minimum_Module_Temp_open_rack_polymer_thinfilm_steel_List
-        summaryListsAs_df["Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)"] = annual_Average_Module_Temp_open_rack_polymer_thinfilm_steel_List
-        summaryListsAs_df["Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)"] = annual_Maximum_Module_Temp_open_rack_polymer_thinfilm_steel_List
-        summaryListsAs_df["Annual Range of Module Temperature__open_rack_polymer_thinfilm_steel (C)"] = annual_Range_Module_Temp_open_rack_polymer_thinfilm_steel_List
-        ##############################          
-        summaryListsAs_df["Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)"] = averageCell98th_22x_concentrator_tracker_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)"] = averageModule98th_22x_concentrator_tracker_List
-        summaryListsAs_df["Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)"] = averageModule98th_22x_concentrator_tracker_List
-        summaryListsAs_df["Annual Minimum Module Temperature__22x_concentrator_tracker (C)"] = annual_Minimum_Module_Temp_22x_concentrator_tracker_List
-        summaryListsAs_df["Annual Average Module Temperature__22x_concentrator_tracker (C)"] = annual_Average_Module_Temp_22x_concentrator_tracker_List
-        summaryListsAs_df["Annual Maximum Module Temperature__22x_concentrator_tracker (C)"] = annual_Maximum_Module_Temp_22x_concentrator_tracker_List
-        summaryListsAs_df["Annual Range of Module Temperature__22x_concentrator_tracker (C)"] = annual_Range_Module_Temp_22x_concentrator_tracker_List
-        ##############################        
-        summaryListsAs_df["Sum of Yearly Dew(mmd-1)"] = pd.DataFrame(sumOfHourlyDew_List)
-
-   
-        
-                
-        summaryListsAs_df["Sum of Relative Power"] = pd.DataFrame(sumOfPower_List)
-        summaryListsAs_df["Avg of Relative Power"] = pd.DataFrame(avgOfPower_List)  
-        
-##################################  
-#   THESE ARE NOW PART OF         
-#        summaryListsAs_df["Sum Rate of Degradation Environment"] = pd.DataFrame(sumOfDegEnv_List)
-#        summaryListsAs_df["Avg Rate of Degradation Environment"] = pd.DataFrame(avgOfDegEnv_List)
-      
-        
-        #Calculate the rate of Deg of a CHamber *Not Weather data*
-#        summaryListsAs_df["Rate of Degradation Chamber"] = energyCalcs.rateOfDegChamber( .64 )
-        #FInal calculation Mike is interested in
-   #     summaryListsAs_df["Acceleration Factor"] = summaryListsAs_df.apply(lambda x: energyCalcs.timeOfDeg( x['Rate of Degradation Chamber'] ,
-#                                                                                                                                  x['Avg Rate of Degradation Environment'] ),
- #                                                                                                                               axis=1)
-##################################################        
-        
-
-        summaryListsAs_df["Annual Global Horizontal Irradiance (GJ/m^-2)"] = annual_GHI_List
-        summaryListsAs_df["Annual Direct Normal Irradiance (GJ/m^-2)"] = annual_DNI_List
-        summaryListsAs_df["Annual Diffuse Horizontal Irradiance (GJ/m^-2)"] = annual_DHI_List
-        summaryListsAs_df["Annual Global UV Dose (MJ/y^-1)"] = annual_Global_UV_Dose_List
-        summaryListsAs_df["Annual UV Dose at Latitude Tilt (MJ/y^-1)"] = annual_UV_Dose_atLatitude_Tilt_List
-        summaryListsAs_df["Annual Minimum Ambient Temperature (C)"] = annual_Minimum_Ambient_Temperature_List
-        summaryListsAs_df["Annual Average Ambient Temperature (C)"] = annual_Average_Ambient_Temperature_List
-        summaryListsAs_df["Annual Maximum Ambient Temperature (C)"] = annual_Maximum_Ambient_Temperature_List
-        summaryListsAs_df["Annual Range Ambient Temperature (C)"] = annual_Ambient_Temperature_Range_List
-        ##############################         
-        summaryListsAs_df["Annual number of Hours Relative Humidity > to 85%"] = annual_hoursThatRHabove85_List
-        summaryListsAs_df["Annual POA Global Irradiance (GJ/m^-2)"] = annual_POA_Global_List
-        summaryListsAs_df["Annual POA Direct Irradiance (GJ/m^-2)"] = annual_POA_Direct_List 
-        summaryListsAs_df["Annual POA Diffuse Irradiance (GJ/m^-2)"] = annual_POA_Diffuse_List 
-        summaryListsAs_df["Annual POA Sky Diffuse Irradiance (GJ/m^-2)"] = annual_POA_SkyDiffuse_List
-        summaryListsAs_df["Annual POA Ground Diffuse Irradiance (GJ/m^-2)"] = annual_POA_GroundDiffuse_List
-        ##############################           
-        #Create the summary frame of Yearly Water Vapor Pressure(kPa) sum/average
-        summaryListsAs_df["Average of Yearly Water Vapor Pressure(kPa)"] = pd.DataFrame( avgWaterVaporPressure_List )
-        summaryListsAs_df["Sum of Yearly Water Vapor Pressure(kPa)"] = pd.DataFrame( sumWaterVaporPressure_List )
-        # File path was saved for each summary row,  this will be used to correct indexing
-        summaryListsAs_df["FilePath"] = pd.DataFrame(filePath_List)
-        #Data Source list of each data set.  TMY3 or CWEC or IWEC
-        summaryListsAs_df["Data Source"] = pd.DataFrame( dataSource_List )
- 
-
-###################################################################################
-
-
-       # When organizing files the directory saves files alphabetically causing index errors
-        # Correct the indexing error with the summary sheet and file path list to associate correctly
-        unique_SummaryStats = summaryListsAs_df['FilePath'].tolist()
-        #Use the helper method to find the unique identifiers
-        unique_SummaryStats = cleanRawOutput.stringList_UniqueID_List( unique_SummaryStats ) 
-        summaryListsAs_df["Site Identifier Code Stats"] = unique_SummaryStats
-        # Sort the summary stats "rows" the unique identifier
-        summaryListsAs_df = summaryListsAs_df.sort_values(by ="Site Identifier Code Stats" )
-        summaryListsAs_df = summaryListsAs_df.reset_index()
-        summaryListsAs_df = summaryListsAs_df.drop(['index'],  axis=1)
-        # Sort the first Row summary information by the Site Identifier Code. "same as Unique Identifier
-        firstRow_summary_df = firstRow_summary_df.sort_values(by ="Site Identifier Code" )
-        firstRow_summary_df = firstRow_summary_df.reset_index() 
-        firstRow_summary_df = firstRow_summary_df.drop(['index'],  axis=1)
-        #Combine the dataframes together
-        # Drop columns for finalized summary output pickle, 
-        # This will be the fianlized pickle that the Output tool will use to display through Excel
-        firstRow_summary_df = firstRow_summary_df.drop(['WMO region',
-                                                    'Time zone code',
-                                                    'Site elevation (km)'], 
-                                                    axis=1)
-        summaryListsAs_df = summaryListsAs_df.drop(['Site Identifier Code Stats'], 
-                                                    axis=1)
-        finalSummary_df = pd.concat([ firstRow_summary_df , summaryListsAs_df ], 
-                                    axis = 1, join_axes=[ firstRow_summary_df.index ])
-        finalSummary_df = finalSummary_df.reindex(columns = ['Site Identifier Code', 
-                                                             'FilePath',
-                                                             'Station name',
-                                                             'Station country or political unit',
-                                                             'Station State',
-                                                             'Data Source',
-                                                             'Site latitude',
-                                                             'Site longitude',
-                                                             'Site time zone (Universal time + or -)',
-                                                             'Site elevation (meters)',
-                                                             'Koppen-Geiger climate classification',
-                                                             
-                                                             'Annual Global Horizontal Irradiance (GJ/m^-2)',
-                                                             'Annual Direct Normal Irradiance (GJ/m^-2)',
-                                                             'Annual Diffuse Horizontal Irradiance (GJ/m^-2)',
-                                                             'Annual POA Global Irradiance (GJ/m^-2)',
-                                                             'Annual POA Direct Irradiance (GJ/m^-2)',
-                                                             'Annual POA Diffuse Irradiance (GJ/m^-2)',
-                                                             'Annual POA Sky Diffuse Irradiance (GJ/m^-2)',
-                                                             'Annual POA Ground Diffuse Irradiance (GJ/m^-2)',
-                                                             'Annual Global UV Dose (MJ/y^-1)',
-                                                             'Annual UV Dose at Latitude Tilt (MJ/y^-1)',
-                                                              
-                                                             'Sum of Relative Power',
-                                                             'Avg of Relative Power',
-                                                             
-                                                             #'Avg Rate of Degradation Environment', 
-                                                             #'Sum Rate of Degradation Environment',
-                                                             #'Acceleration Factor',
-                                                             
-                                                             
-                                                             'Annual Minimum Ambient Temperature (C)',
-                                                             'Annual Average Ambient Temperature (C)',
-                                                             'Annual Maximum Ambient Temperature (C)',
-                                                             'Annual Range Ambient Temperature (C)',
-                                                             'Average of Yearly Water Vapor Pressure(kPa)',
-                                                             'Sum of Yearly Water Vapor Pressure(kPa)',
-                                                             "Annual number of Hours Relative Humidity > to 85%",
-                                                             'Sum of Yearly Dew(mmd-1)',
-    
-                                                             'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_glassback (C)', 
-                                                             'Annual Average (98th Percentile) Module Temperature__open_rack_cell_glassback (C)',
-                                                             'Annual Minimum Module Temperature__open_rack_cell_glassback (C)',
-                                                             'Annual Average Module Temperature__open_rack_cell_glassback (C)',
-                                                             'Annual Maximum Module Temperature__open_rack_cell_glassback (C)',
-                                                             'Annual Range of Module Temperature__open_rack_cell_glassback (C)',
-                                                             
-                                                             'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)',
-                                                             'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)',
-                                                             'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)',
-                                                             'Annual Average Module Temperature__roof_mount_cell_glassback (C)',
-                                                             'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)',
-                                                             'Annual Range of Module Temperature__roof_mount_cell_glassback (C)',                                                         
-                                                             
-                                                             'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)',
-                                                             'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)',
-                                                             'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)',
-                                                             'Annual Average Module Temperature__open_rack_cell_polymerback (C)',
-                                                             'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)',
-                                                             'Annual Range of Module Temperature__open_rack_cell_polymerback (C)',                                                         
-                                                             
-                                                             'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)',
-                                                             'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)',
-                                                             'Annual Minimum Module Temperature__insulated_back_polymerback (C)',
-                                                             'Annual Average Module Temperature__insulated_back_polymerback (C)',
-                                                             'Annual Maximum Module Temperature__insulated_back_polymerback (C)',
-                                                             'Annual Range of Module Temperature__insulated_back_polymerback (C)',                                                         
-                                                             
-                                                             'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)',
-                                                             'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)',
-                                                             'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
-                                                             'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)',
-                                                             'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
-                                                             'Annual Range of Module Temperature__open_rack_polymer_thinfilm_steel (C)',                                                         
-                                                             
-                                                             'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)',
-                                                             'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)', 
-                                                             'Annual Minimum Module Temperature__22x_concentrator_tracker (C)',
-                                                             'Annual Average Module Temperature__22x_concentrator_tracker (C)',
-                                                             'Annual Maximum Module Temperature__22x_concentrator_tracker (C)',
-                                                             'Annual Range of Module Temperature__22x_concentrator_tracker (C)',
-    
-                                                               ])
-        #Create a summary pickle with the processed data
+        # Save summary of all sites as a pickle    
         finalSummary_df.to_pickle( currentDirectory + '\Pandas_Pickle_DataFrames\Pickle_Level1_Summary\Pickle_Level1_Summary.pickle')
 
 

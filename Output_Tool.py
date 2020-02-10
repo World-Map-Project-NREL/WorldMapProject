@@ -164,21 +164,14 @@ def createPickleFiles( currentDirectory ):
                               '\\Pandas_Pickle_DataFrames\\Pickle_FirstRows')
 
     myWorkBook.sheets[mySheet].range(48,4).value = \
-                                "Merging IWEC , CWEC, and TMY3 data together"
+                                "Merging IWEC, CWEC, TMY3 and Satellite data together"
     myWorkBook.sheets[mySheet].range(50,6).value = "Total Files"
     # Get a list of all the raw files
     numFiles = len( rawDataImport.rawFilesNamesList( path ) )
     myWorkBook.sheets[mySheet].range(51,6).value = numFiles
-    # Aggregate raw data to tuples containing  ( series:location data , 
-    #                                            dataframe: metadata)
+
     rawDataImport.rawDataToTuple( path ) 
-    myWorkBook.sheets[mySheet].range(48,4).value = "Creating Summary Sheet"
-    myWorkBook.sheets[mySheet].range(50,4).value = ""
-    myWorkBook.sheets[mySheet].range(50,6).value = ""
-    myWorkBook.sheets[mySheet].range(51,4).value = ""
-    myWorkBook.sheets[mySheet].range(51,6).value = ""
-    # Create a summary frame of the raw data
-    rawDataImport.createPickleFileFirstRow( path )
+
     myWorkBook.sheets[mySheet].range(48,4).value = "Pickles Sucessfully Saved"
     
     

@@ -183,9 +183,9 @@ class solarTime:
                                                  EXAMPLE timestamp: 1998-01-01 00:16:13.609301
         '''    
         lSTM = 15 * timeZoneDif
-        
+   
         daysInTheYear = solarTime.toDaysOfYear(localTime)
-        
+      
         angleB = solarTime.angle_B(daysInTheYear)
     
         equationOfTime = solarTime.eoT(angleB)

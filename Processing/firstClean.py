@@ -70,6 +70,9 @@ class firstClean:
         return pd.to_datetime(date_str, format='%m/%d/%Y %H:%M') + \
                dt.timedelta(days=1)
     
+
+
+
     
     def cleanedFrame( raw_df , hoursAheadOrBehind , longitude ):    
         
@@ -109,8 +112,19 @@ class firstClean:
         level_1_df.Albedo = level_1_df.Albedo.fillna(.2)
         # Correcting the Albedo
         #If the Albedo falls below 0 then correect the Albedo to 0.133
+        
+############################################################        
         #Lambda starts at the first element of the row being named "x" and processes until the last element of the dataframe
-        level_1_df['Corrected Albedo'] = level_1_df.Albedo.apply(lambda x: 0.133 if x <= 0 or x >= 100 else x)
+        #level_1_df['Corrected Albedo'] = level_1_df.Albedo.apply(lambda x: 0.133 if x <= 0 or x >= 100 else x)
+        
+        level_1_df['Corrected Albedo'] = level_1_df['Albedo']
+        level_1_df['Corrected Albedo'].values[level_1_df['Corrected Albedo'].values < 0 ] = 0.133
+        level_1_df['Corrected Albedo'].values[level_1_df['Corrected Albedo'].values > 100 ] = 0.133
+
+        
+#############################################################        
+        
+        
         # TOTAL SKY COVERAGE, sub data frame needed to change sky coverage scale from tenths(1/10) to okta(1/8)
                             # Okta frame will be used to calculate the estimated yearly dew yield
         level_1_df['Total sky cover(okta)'] = (level_1_df['Total sky cover'].astype(float) * 8) / 10
@@ -127,14 +141,28 @@ class firstClean:
         # Correct the datetime object to universal time
         # Use the helper method universalTimeCorrected() to process each local 
         #     date time object
+        
+        
         # Create a new column in the level_1_df to store the Universal Date time object
-        level_1_df['Universal Date Time'] = level_1_df['Local Date Time'].apply(lambda x: firstClean.universalTimeCorrected(x, hoursAheadOrBehind))
+##############################################################        
+        #level_1_df['Universal Date Time'] = level_1_df['Local Date Time'].apply(lambda x: firstClean.universalTimeCorrected(x, hoursAheadOrBehind))
+        
+        level_1_df['Universal Date Time'] = firstClean.universalTimeCorrected(level_1_df['Local Date Time'], hoursAheadOrBehind)
+###############################################################        
+        
         #Calculate the Local Solar time
         # Use the localTimeToSolarTime() helper method
         # Create a new column in the level_1_df to store the Universal Date time object
         level_1_df['Local Solar Time'] = level_1_df.apply(lambda x: solarTime.localTimeToSolarTime( longitude , hoursAheadOrBehind , x['Local Date Time']), axis=1)
         #Create another column of the hourly numeric Local Solar Time
-        level_1_df['Hourly Local Solar Time'] = level_1_df['Local Solar Time'].apply(lambda x: x.hour + (x.minute/60)) 
+        
+###################################################################################        
+       # level_1_df['Hourly Local Solar Time'] = level_1_df['Local Solar Time'].apply(lambda x: x.hour + (x.minute/60)) 
+        
+        level_1_df['Hourly Local Solar Time'] = level_1_df['Local Solar Time'].dt.hour + (level_1_df['Local Solar Time'].dt.minute/60)
+##################################################################################        
+        
+        
         # Drop the old Date and Time (Strings) columns
         level_1_df = level_1_df.drop(columns=['Date (MM/DD/YYYY)', 'Time (HH:MM)' ])
         # Re index the column headings in a more organized format 

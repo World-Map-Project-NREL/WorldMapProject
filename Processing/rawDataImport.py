@@ -24,7 +24,11 @@ import io
 import pickle
 
 from Processing.cleanRawOutput  import cleanRawOutput
+from Processing.firstClean import firstClean
+
+#Testing
 #from cleanRawOutput import cleanRawOutput
+#from firstClean import firstClean
 
 try:
     # python 2 compatibility
@@ -195,165 +199,236 @@ class rawDataImport:
         '''        
         allCsvFiles = glob.glob(path + '\Python_RawData_Combined' + "/*.csv")
         allEpwFiles = glob.glob(path + '\Python_RawData_Combined' + "/*.epw")
-        tupleList = []
+ #       tupleList = []
+        failString = "{} did not convert to format"
 
         # For loop to make all CSV files into tuples   
-        for i in range( 0 , len( allCsvFiles ) ):  
-            csv_df = pd.read_csv(allCsvFiles[i], skiprows= 1 ,  header=0)
-            # Filter to aggregate data together, Some CSV files contain uneeded headers
-            if len(csv_df.columns) == 71:
-                csv_df = csv_df.drop(['PresWth source','PresWth uncert (code)'], axis=1)
+        for i in range( 0 , len( allCsvFiles ) ):
+            #Not all CSV files will convert properly
+            try:
+                csv_df = pd.read_csv(allCsvFiles[i], skiprows= 1 ,  header=0)
+                # Filter to aggregate data together, Some CSV files contain uneeded headers
+                if len(csv_df.columns) == 71:
+                    csv_df = csv_df.drop(['PresWth source','PresWth uncert (code)'], axis=1)
+                    
+                csv_df = rawDataImport.RenameFrame(csv_df)
+                # Create location for this CSV 
+                location_df = pd.read_csv(allCsvFiles[i], skiprows= 0 , nrows= 1, header = None,
+                         names =['Site Identifier Code',
+                                'Station name',
+                                'Station State', 
+                                'Site time zone (Universal time + or -)',
+                                'Site latitude', 
+                                'Site longitude',
+                                'Site elevation (meters)',
+                                'Station country or political unit',
+                                'WMO region',
+                                'Time zone code',
+                                'Koppen-Geiger climate classification'] )
+                location_series = location_df.iloc[0]
+################################################################################                
+                # Add the filepathnName
+                fileNameCSV = os.path.basename(allCsvFiles[i])
+                #remove extension from file name
+                fileNameCSV = fileNameCSV[:-4]
+                fileNameCSV = fileNameCSV + '.pickle'
+                fileName_series = pd.Series( fileNameCSV , index=['FileName'])
+                location_series = location_series.append( fileName_series )
+
+
+                longitude = location_series.get(key = 'Site longitude')
+                #hoursAheadorBehind will be the number of hours ahead or behind universal time
+                hoursAheadOrBehind = location_series.get(key = 'Site time zone (Universal time + or -)')                
+                csv_df  = firstClean.cleanedFrame( csv_df , hoursAheadOrBehind , longitude )
                 
-            csv_df = rawDataImport.RenameFrame(csv_df)
-            # Create location for this CSV 
-            location_df = pd.read_csv(allCsvFiles[i], skiprows= 0 , nrows= 1, header = None,
-                     names =['Site Identifier Code',
-                            'Station name',
-                            'Station State', 
-                            'Site time zone (Universal time + or -)',
-                            'Site latitude', 
-                            'Site longitude',
-                            'Site elevation (meters)',
-                            'Station country or political unit',
-                            'WMO region',
-                            'Time zone code',
-                            'Koppen-Geiger climate classification'] )
-            location_series = location_df.iloc[0]
-            # Add all the CSV tuples to the list
-            locationAllData_tuple = ( location_series , csv_df )
-            tupleList.append( locationAllData_tuple )
-            
+################################################################################ 
+                # Add all the CSV tuples to the list
+                locationAllData_tuple = ( location_series , csv_df )                
+                
+                
+                
+                
+                with open( path + \
+                    '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
+                    fileNameCSV, 'wb') as f:
+                    pickle.dump(locationAllData_tuple, f)                
+                    
+
+               # tupleList.append( locationAllData_tuple )
+                
+            except:
+                print(failString.format(allCsvFiles[i]))
 
         # For loop to make all EPW files into tuples
-        for j in range( 0 , len( allEpwFiles ) ):  
-            # Use helper method to convert the EPW file to a dataframe
-            epw_df = rawDataImport.read_epw_df(allEpwFiles[j] , coerce_year=None)
-            #Put the datetime objects into their own column by reseting the index
-            epw_df.reset_index(inplace=True)
-            #Convert the pandas time series to MM/DD/YYYY format
-            epw_df['Date (MM/DD/YYYY)'] = epw_df['index'].map(lambda x: x.strftime('%m/%d/%Y'))
-            #Convert the pandas time series to "Hour(24hrs scale):Minute"
-            epw_df['Time (HH:MM)'] = epw_df['index'].map(lambda x: x.strftime('%H:%M'))
-            #Convert the atmospheric pressure form Pa to mbar
-            epw_df['atmospheric_pressure'] = epw_df['atmospheric_pressure'].apply(lambda x: x/100)
-            #Convert the visibility from km to m
-            epw_df['visibility'] = epw_df['visibility'].apply(lambda x: x*1000)        
-            # Drop columns that we do not need
-            epw_df = epw_df.drop(['index', 
-                                  'year',
-                                  'month',
-                                  'day',
-                                  'hour',
-                                  'minute',
-                                  'data_source_unct'], 
-                                    axis=1)
-            #Re-index the columns in a proper fashion
-            epw_df = epw_df.reindex(columns = ['Date (MM/DD/YYYY)', 
-                                               'Time (HH:MM)',
-                                               'etr',
-                                               'etrn',
-                                               'ghi_infrared',
-                                               'ghi',
-                                               'dni', 
-                                               'dhi',
-                                               'global_hor_illum',
-                                               'direct_normal_illum', 
-                                               'diffuse_horizontal_illum',
-                                               'zenith_luminance',
-                                               'total_sky_cover',
-                                               'opaque_sky_cover',
-                                               'temp_air',
-                                               'temp_dew',
-                                               'relative_humidity',
-                                               'atmospheric_pressure',
-                                               'wind_direction',
-                                               'wind_speed',
-                                               'visibility', 
-                                               'ceiling_height',
-                                               'precipitable_water',
-                                               'aerosol_optical_depth',
-                                               'albedo',
-                                               'liquid_precipitation_depth',
-                                               'liquid_precipitation_quantity',
-                                               'present_weather_observation',
-                                               'present_weather_codes',
-                                               'snow_depth',
-                                               'days_since_last_snowfall'])                                          
-            epw_df.columns = ['Date (MM/DD/YYYY)', 
-                          'Time (HH:MM)',
-                          'Hourly extraterrestrial radiation on a horizontal surface',
-                          'Hourly extraterrestrial radiation normal to the sun',
-                          'Horizontal infrared radiation',
-                          'Global horizontal irradiance',
-                          'Direct normal irradiance',
-                          'Diffuse horizontal irradiance',
-                          'Global horizontal illuminance',
-                          'Direct normal illuminance',
-                          'Diffuse horizontal illuminance',
-                          'Zenith luminance',
-                          'Total sky cover',
-                          'Opaque sky cover',
-                          'Dry-bulb temperature',
-                          'Dew-point temperature',
-                          'Relative humidity',
-                          'Station pressure',
-                          'Wind direction',
-                          'Wind speed',
-                          'Horizontal visibility',
-                          'Ceiling height',
-                          'Precipitable water',
-                          'Aerosol optical depth, broadband',
-                          'Albedo',
-                          'Liquid percipitation depth',
-                          'Liquid percipitation quantity',
-                          'Present Weather Observations',
-                          'Present Weather Codes',
-                          'Snow Depth',
-                          'Days Since Last Snowfall']   
-            
-            #Get site location data for the EPW files     
-            epwFirstRow = rawDataImport.read_epw_firstRow(allEpwFiles[j], coerce_year=None)
-            location_df = pd.DataFrame(columns=['Site Identifier Code',
-                                            'Station name',
-                                            'Station State', 
-                                            'Site time zone (Universal time + or -)',
-                                            'Site latitude', 
-                                            'Site longitude',
-                                            'Site elevation (meters)',
-                                            'Station country or political unit',
-                                            'WMO region',
-                                            'Time zone code',
-                                            'Koppen-Geiger climate classification'])
-            location_df = location_df.append({'Site Identifier Code': '',
-                                      'Station name':epwFirstRow.get('city'),
-                                      'Station State': '',   
-                                      'Site time zone (Universal time + or -)': epwFirstRow.get('TZ'),
-                                      'Site latitude': epwFirstRow.get('latitude'), 
-                                      'Site longitude': epwFirstRow.get('longitude'),
-                                      'Site elevation (meters)': epwFirstRow.get('altitude'),
-                                      'Station country or political unit': epwFirstRow.get('country'),
-                                      'WMO region': '',
-                                      'Time zone code': '',
-                                      'Koppen-Geiger climate classification': ''
-                                    }, ignore_index=True ) 
-            
-            #Find and store the UniqueID for this site
-            uniqueID = cleanRawOutput.string_UniqueID( allEpwFiles[j] )
-            location_df['Site Identifier Code'] = uniqueID
-            # Add all the EPW tuples to the list
-            location_series = location_df.iloc[0]         
-            locationAllData_tuple = ( location_series , epw_df )
-            tupleList.append( locationAllData_tuple )
-        
+        for j in range( 0 , len( allEpwFiles ) ): 
+            #Not all EPW files will convert properly
+            try:
+                # Use helper method to convert the EPW file to a dataframe
+                epw_df = rawDataImport.read_epw_df(allEpwFiles[j] , coerce_year=None)
+                #Put the datetime objects into their own column by reseting the index
+                epw_df.reset_index(inplace=True)
+                #Convert the pandas time series to MM/DD/YYYY format
+                epw_df['Date (MM/DD/YYYY)'] = epw_df['index'].map(lambda x: x.strftime('%m/%d/%Y'))
+                #Convert the pandas time series to "Hour(24hrs scale):Minute"
+                epw_df['Time (HH:MM)'] = epw_df['index'].map(lambda x: x.strftime('%H:%M'))
+                #Convert the atmospheric pressure form Pa to mbar
+                epw_df['atmospheric_pressure'] = epw_df['atmospheric_pressure'].apply(lambda x: x/100)
+                #Convert the visibility from km to m
+                epw_df['visibility'] = epw_df['visibility'].apply(lambda x: x*1000)        
+                # Drop columns that we do not need
+                epw_df = epw_df.drop(['index', 
+                                      'year',
+                                      'month',
+                                      'day',
+                                      'hour',
+                                      'minute',
+                                      'data_source_unct'], 
+                                        axis=1)
+                #Re-index the columns in a proper fashion
+                epw_df = epw_df.reindex(columns = ['Date (MM/DD/YYYY)', 
+                                                   'Time (HH:MM)',
+                                                   'etr',
+                                                   'etrn',
+                                                   'ghi_infrared',
+                                                   'ghi',
+                                                   'dni', 
+                                                   'dhi',
+                                                   'global_hor_illum',
+                                                   'direct_normal_illum', 
+                                                   'diffuse_horizontal_illum',
+                                                   'zenith_luminance',
+                                                   'total_sky_cover',
+                                                   'opaque_sky_cover',
+                                                   'temp_air',
+                                                   'temp_dew',
+                                                   'relative_humidity',
+                                                   'atmospheric_pressure',
+                                                   'wind_direction',
+                                                   'wind_speed',
+                                                   'visibility', 
+                                                   'ceiling_height',
+                                                   'precipitable_water',
+                                                   'aerosol_optical_depth',
+                                                   'albedo',
+                                                   'liquid_precipitation_depth',
+                                                   'liquid_precipitation_quantity',
+                                                   'present_weather_observation',
+                                                   'present_weather_codes',
+                                                   'snow_depth',
+                                                   'days_since_last_snowfall'])                                          
+                epw_df.columns = ['Date (MM/DD/YYYY)', 
+                              'Time (HH:MM)',
+                              'Hourly extraterrestrial radiation on a horizontal surface',
+                              'Hourly extraterrestrial radiation normal to the sun',
+                              'Horizontal infrared radiation',
+                              'Global horizontal irradiance',
+                              'Direct normal irradiance',
+                              'Diffuse horizontal irradiance',
+                              'Global horizontal illuminance',
+                              'Direct normal illuminance',
+                              'Diffuse horizontal illuminance',
+                              'Zenith luminance',
+                              'Total sky cover',
+                              'Opaque sky cover',
+                              'Dry-bulb temperature',
+                              'Dew-point temperature',
+                              'Relative humidity',
+                              'Station pressure',
+                              'Wind direction',
+                              'Wind speed',
+                              'Horizontal visibility',
+                              'Ceiling height',
+                              'Precipitable water',
+                              'Aerosol optical depth, broadband',
+                              'Albedo',
+                              'Liquid percipitation depth',
+                              'Liquid percipitation quantity',
+                              'Present Weather Observations',
+                              'Present Weather Codes',
+                              'Snow Depth',
+                              'Days Since Last Snowfall']   
+                
+                #Get site location data for the EPW files     
+                epwFirstRow = rawDataImport.read_epw_firstRow(allEpwFiles[j], coerce_year=None)
+                location_df = pd.DataFrame(columns=['Site Identifier Code',
+                                                'Station name',
+                                                'Station State', 
+                                                'Site time zone (Universal time + or -)',
+                                                'Site latitude', 
+                                                'Site longitude',
+                                                'Site elevation (meters)',
+                                                'Station country or political unit',
+                                                'WMO region',
+                                                'Time zone code',
+                                                'Koppen-Geiger climate classification'])
+                location_df = location_df.append({'Site Identifier Code': '',
+                                          'Station name':epwFirstRow.get('city'),
+                                          'Station State': '',   
+                                          'Site time zone (Universal time + or -)': epwFirstRow.get('TZ'),
+                                          'Site latitude': epwFirstRow.get('latitude'), 
+                                          'Site longitude': epwFirstRow.get('longitude'),
+                                          'Site elevation (meters)': epwFirstRow.get('altitude'),
+                                          'Station country or political unit': epwFirstRow.get('country'),
+                                          'WMO region': '',
+                                          'Time zone code': '',
+                                          'Koppen-Geiger climate classification': ''
+                                        }, ignore_index=True ) 
+                
+                #Find and store the UniqueID for this site
+                uniqueID = cleanRawOutput.string_UniqueID( allEpwFiles[j] )
+                location_df['Site Identifier Code'] = uniqueID
+                # Add all the EPW tuples to the list
+                location_series = location_df.iloc[0]
+################################################################################                
+                # Add the filepathnName
+                fileNameEPW = os.path.basename(allEpwFiles[j])
+                #remove extension from file name
+                fileNameEPW = fileNameEPW[:-4]
+                fileNameEPW = fileNameEPW + '.pickle'
+                fileName_series = pd.Series( fileNameEPW , index=['FileName'])
+                location_series = location_series.append( fileName_series )
+                
+                
+                
+                
+                longitude = location_series.get(key = 'Site longitude')
+                #hoursAheadorBehind will be the number of hours ahead or behind universal time
+                hoursAheadOrBehind = location_series.get(key = 'Site time zone (Universal time + or -)')                
+                epw_df  = firstClean.cleanedFrame( epw_df , hoursAheadOrBehind , longitude )
+################################################################################                
+                locationAllData_tuple = ( location_series , epw_df )
+                
+
+                with open( path + \
+                    '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
+                    fileNameEPW, 'wb') as f:
+                    pickle.dump(locationAllData_tuple, f)
+ 
+            except:
+                print(failString.format(allEpwFiles[j]))
         #Name and store all the tuples as pickles in a directory
-        fileNames = rawDataImport.rawFilesNamesList( path )
-        pickleStringList = rawDataImport.pickleNameList( fileNames )
+ #       fileNames = rawDataImport.rawFilesNamesList( path )
+ #       pickleStringList = rawDataImport.pickleNameList( fileNames )
         
-        for k in range(0 , len(pickleStringList)):
-            with open( path + \
-                '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
-                pickleStringList[k], 'wb') as f:
-                pickle.dump(tupleList[k], f)
+        #Create files for all the tuples
+#        for k in range(0 , len(tupleList)):
+            
+
+ #           locationData , data = tupleList[k]
+ #           fileName = locationData.get(key = 'FileName') 
+  #          with open( path + \
+  #              '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
+  #              fileName, 'wb') as f:
+  #              pickle.dump(tupleList[k], f)
+        
+ #       for k in range(0 , len(pickleStringList)):
+            
+
+            
+  #          with open( path + \
+  #              '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
+  #              pickleStringList[k], 'wb') as f:
+  #              pickle.dump(tupleList[k], f)
 
     
 
@@ -879,4 +954,11 @@ class rawDataImport:
         data.index = idx
     
         return meta
+
+#path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
+#i = 1
+#j =1
+#rawDataImport.rawDataToTuple( path )
+
+
 

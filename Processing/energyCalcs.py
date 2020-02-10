@@ -152,6 +152,7 @@ class energyCalcs:
                     h**2 ) ) * (10**( -3 ) * tD ) ) * ( ( ( ( tD + 273.15)/ \
                     285)**4)*(1 - (n/8))) + (0.06 * (tD - tA ) ) * ( 1 + 100 * \
                     ( 1 - np.exp( - ( windSpeed / windSpeedCutOff)**20 ) ) ) ) 
+
         return dewYield
     
     
@@ -168,7 +169,7 @@ class energyCalcs:
         @param dewPtTemp          -float, Dew Point Temperature
         @return                   -float, return water vapor pressur in kPa
         '''    
-        return( math.exp(( 3.257532E-13 * dewPtTemp**6 ) - 
+        return( np.exp(( 3.257532E-13 * dewPtTemp**6 ) - 
                 ( 1.568073E-10 * dewPtTemp**6 ) + 
                 ( 2.221304E-08 * dewPtTemp**4 ) + 
                 ( 2.372077E-7 * dewPtTemp**3) - 
