@@ -5,58 +5,13 @@ Created on Fri Feb  7 11:54:22 2020
 @author: DHOLSAPP
 """
 
+
+import pandas as pd
+import numpy as np
+#Boltzmann constant
+from scipy.constants import k , convert_temperature
 from utility import utility
 from energyCalcs import energyCalcs
-from firstClean import firstClean
-import pandas as pd
-import datetime as dt
-from solarTime import solarTime
-
-
-
-def my_to_datetime(date_str):
-    
-    '''
-    HELPER METHOD
-    
-    my_to_datetime()
-    
-    Create a datetime object from a string of Date and Time.  
-    
-    @param date_str   -String, of Date and Time
-    
-    @return datetime  -dateTime object, return a datetime object of the string passed
-    
-    '''
-    #If the time is not 24:00
-    if date_str[11:13] != '24':
-        # Return the date time object without any changes
-        return pd.to_datetime(date_str, format='%m/%d/%Y %H:%M')
-    
-    # Correct the 24:00 by changing 24 to 0
-    date_str = date_str[0:11] + '00' + date_str[13:]
-    # Add 1 day to the date time object and return
-    return pd.to_datetime(date_str, format='%m/%d/%Y %H:%M') + \
-           dt.timedelta(days=1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Testing enviornment
@@ -65,53 +20,63 @@ def my_to_datetime(date_str):
 
 currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 
-fileNames = utility.filesNameList( currentDirectory , 'rawData' )
-locationData , raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_RawData\\' + fileNames[50])
+fileNames = utility.filesNameList( currentDirectory , 'level_1_data' )
+locationData , raw_df = pd.read_pickle( currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[237])
+summaryFrame = pd.read_pickle( r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject\Pandas_Pickle_DataFrames\Pickle_Level1_Summary\Pickle_Level1_Summary.pickle')
 
-h = locationData.get(key = 'Site elevation (meters)') 
-tD =  raw_df['Dew-point temperature'].values
-tA =    raw_df['Dry-bulb temperature'].values 
-windSpeed =   raw_df['Wind speed'].values 
+# Develop a script to process the PBSn solder bump fatigue
 
-raw_df['Total sky cover(okta)'] = (raw_df['Total sky cover'].astype(float) * 8) / 10
+#########################################
+#Get the maximum Cell temp average for the year
+#raw_df['Local Date Time'] = pd.to_datetime(raw_df['Local Date Time'])
 
-n =   raw_df['Total sky cover(okta)'].values
+timeAndTemp_df = pd.DataFrame( raw_df , columns = ['Local Date Time' , 'Cell Temperature(open_rack_cell_glassback)(C)'])
+#timeAndTemp_df['Cell Temperature(open_rack_cell_glassback)(C)'] = convert_temperature(raw_df['Cell Temperature(open_rack_cell_glassback)(C)'], 'Celsius', 'Kelvin')
+
+#Arguments will be Local TIme and Cell Temperature
+
+timeAndTemp_df.index = raw_df['Local Date Time']
+timeAndTemp_df['month'] = timeAndTemp_df.index.month
+timeAndTemp_df['day'] = timeAndTemp_df.index.day
+
+#Group by month and day to determine the max and min cell Temperature (C) for each day
+dailyMaxCellTemp_series = timeAndTemp_df.groupby(['month','day'])['Cell Temperature(open_rack_cell_glassback)(C)'].max()
+dailyMinCellTemp_series = timeAndTemp_df.groupby(['month','day'])['Cell Temperature(open_rack_cell_glassback)(C)'].min()
+
+cellTempChange = pd.DataFrame({ 'Max': dailyMaxCellTemp_series, 'Min': dailyMinCellTemp_series})
+cellTempChange['TempChange'] = cellTempChange['Max'] - cellTempChange['Min']
+
+#Find the average temperature change for every day of one year (C) arg for model
+MeanDailyMaxCellTempChange_Average = cellTempChange['TempChange'].mean()
+#Find the average max temp for every day of one year (C) arg for model
+
+dailyMaxCellTemp_Average = convert_temperature(dailyMaxCellTemp_series.mean(), 'Celsius', 'Kelvin')
+#dailyMaxCellTemp_Average = dailyMaxCellTemp_series.mean()
+
+################################
+
+##############################
+#Find the number of times the temperature crosses over 54.8(C)
+temp_df = pd.DataFrame()
+temp_df['CellTemp'] = raw_df['Cell Temperature(open_rack_cell_glassback)(C)']
+temp_df['COMPARE'] = raw_df['Cell Temperature(open_rack_cell_glassback)(C)']
+temp_df['COMPARE'] = temp_df.COMPARE.shift(-1)
+
+reversalTemp = 54.8
+
+temp_df['cross'] = (
+    ((temp_df.CellTemp >= reversalTemp) & (temp_df.COMPARE < reversalTemp)) |
+    ((temp_df.COMPARE > reversalTemp) & (temp_df.CellTemp <= reversalTemp)) |
+    (temp_df.CellTemp == reversalTemp))
+
+numChangesTempHist = temp_df.cross.sum()
+###################################
 
 
 
+D = 405.6 * (MeanDailyMaxCellTempChange_Average **1.9) * (numChangesTempHist**.33) * np.exp(-(.12/((.00008617333262145)*dailyMaxCellTemp_Average)))
 
-raw_df['Dew Yield'] = energyCalcs.dewYield( h , tD , tA , windSpeed , n )
-#Replace negative numbers with 0
-raw_df['Dew Yield'].values[raw_df['Dew Yield'].values < 0] = 0
-
-raw_df['Water Vapor Pressure'] = energyCalcs.waterVaporPressure( raw_df['Dew-point temperature'] )
-
-
-raw_df['Corrected Albedo'] = raw_df['Albedo']
-raw_df['Corrected Albedo'].values[raw_df['Corrected Albedo'].values < 0 ] = 0.133
-raw_df['Corrected Albedo'].values[raw_df['Corrected Albedo'].values > 100 ] = 0.133
-
-
-DateTimeStrings = raw_df['Date (MM/DD/YYYY)'].str.cat(raw_df['Time (HH:MM)'],sep=" ")
-
-raw_df['Local Date Time'] = DateTimeStrings.apply(lambda x: firstClean.my_to_datetime(x))
-
-raw_df['Universal Date Time'] = firstClean.universalTimeCorrected(raw_df['Local Date Time'], 5)
-
-
-
-raw_df['Local Solar Time'] = raw_df.apply(lambda x: solarTime.localTimeToSolarTime( 32 , 5 , x['Local Date Time']), axis=1)
-
-raw_df['Hourly Local Solar Time'] = raw_df['Local Solar Time'].dt.hour + (raw_df['Local Solar Time'].dt.minute/60)
-
-
-
-
-
-
-
-
-
-
-
-
+reversalTemp = 54.8
+finalTest = energyCalcs.solderFatigue( raw_df['Local Date Time'] , 
+                                      raw_df['Cell Temperature(open_rack_cell_glassback)(C)'] , 
+                                      reversalTemp)

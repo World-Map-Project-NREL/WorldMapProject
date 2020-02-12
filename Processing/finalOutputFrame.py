@@ -21,11 +21,9 @@ import pickle
 
 #For XLwings ref
 from Processing.energyCalcs import energyCalcs
-from Processing.firstClean import firstClean
 from Processing.utility import utility
 
 #from energyCalcs import energyCalcs
-#from firstClean import firstClean
 #from utility import utility
 
 class finalOutputFrame:
@@ -105,7 +103,7 @@ class finalOutputFrame:
                                                       
                                                      'Sum of Relative Power',
                                                      'Avg of Relative Power',
-                                                     
+        
                                                      'Annual Minimum Ambient Temperature (C)',
                                                      'Annual Average Ambient Temperature (C)',
                                                      'Annual Maximum Ambient Temperature (C)',
@@ -121,20 +119,23 @@ class finalOutputFrame:
                                                      'Annual Average Module Temperature__open_rack_cell_glassback (C)',
                                                      'Annual Maximum Module Temperature__open_rack_cell_glassback (C)',
                                                      'Annual Range of Module Temperature__open_rack_cell_glassback (C)',
+                                                     'Solder Fatigue Damage__open_rack_cell_glassback', 
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Average Module Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)',
-                                                     'Annual Range of Module Temperature__roof_mount_cell_glassback (C)',                                                         
+                                                     'Annual Range of Module Temperature__roof_mount_cell_glassback (C)',
+                                                     'Solder Fatigue Damage__roof_mount_cell_glassback',                                                          
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Average Module Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)',
-                                                     'Annual Range of Module Temperature__open_rack_cell_polymerback (C)',                                                         
+                                                     'Annual Range of Module Temperature__open_rack_cell_polymerback (C)', 
+                                                     'Solder Fatigue Damage__roof_mount_open_rack_cell_polymerback',                                                         
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)',
@@ -142,6 +143,7 @@ class finalOutputFrame:
                                                      'Annual Average Module Temperature__insulated_back_polymerback (C)',
                                                      'Annual Maximum Module Temperature__insulated_back_polymerback (C)',
                                                      'Annual Range of Module Temperature__insulated_back_polymerback (C)',                                                         
+                                                     'Solder Fatigue Damage__insulated_back_polymerback', 
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)',
@@ -149,6 +151,7 @@ class finalOutputFrame:
                                                      'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Range of Module Temperature__open_rack_polymer_thinfilm_steel (C)',                                                         
+                                                     'Solder Fatigue Damage__open_rack_polymer_thinfilm_steel', 
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)', 
@@ -156,6 +159,7 @@ class finalOutputFrame:
                                                      'Annual Average Module Temperature__22x_concentrator_tracker (C)',
                                                      'Annual Maximum Module Temperature__22x_concentrator_tracker (C)',
                                                      'Annual Range of Module Temperature__22x_concentrator_tracker (C)',
+                                                     'Solder Fatigue Damage__22x_concentrator_tracker', 
 
                                                       ])
         
@@ -342,9 +346,9 @@ class finalOutputFrame:
             sumOfDNI = energyCalcs.whToGJ( level_1_df['Direct normal irradiance'].sum(axis = 0, skipna = True) )
             #Calculate the sum of yearly DHI
             sumOfDHI = energyCalcs.whToGJ( level_1_df['Diffuse horizontal irradiance'].sum(axis = 0, skipna = True) )
-            #Calculate the sum of yearly POA global
+            #Calculate the sum of yearly POA global in Giga Joules
             sumOfPOA_Global = energyCalcs.whToGJ( totalIrradiance_df['poa_global'].sum(axis = 0, skipna = True) )
-            #Calculate the sum of yearly POA Direct
+            #Calculate the sum of yearly POA Direct in Giga Jouls
             sumOfPOA_Direct = energyCalcs.whToGJ( totalIrradiance_df['poa_direct'].sum(axis = 0, skipna = True) )
             #Calculate the sum of yearly POA Diffuse
             sumOfPOA_Diffuse = energyCalcs.whToGJ( totalIrradiance_df['poa_diffuse'].sum(axis = 0, skipna = True) )
@@ -384,6 +388,8 @@ class finalOutputFrame:
             maximum_Module_Temp_open_rack_cell_glassback = level_1_df['Module Temperature(open_rack_cell_glassback)'].max()
             #Calculate the annual range ambient temperature        
             range_Module_Temp_open_rack_cell_glassback = maximum_Module_Temp_open_rack_cell_glassback - minimum_Module_Temp_open_rack_cell_glassback
+            #Calculate the Solder Fatigue 
+            solderFatigue_open_rack_cell_glassback = energyCalcs.solderFatigue(  level_1_df['Local Date Time'] ,  level_1_df['Cell Temperature(open_rack_cell_glassback)'] , 54.8)
             ##############################            
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_roof_mount_cell_glassback = level_1_df['Module Temperature(roof_mount_cell_glassback)'].min()
@@ -393,6 +399,8 @@ class finalOutputFrame:
             maximum_Module_Temp_roof_mount_cell_glassback = level_1_df['Module Temperature(roof_mount_cell_glassback)'].max()
             #Calculate the annual range ambient temperature        
             range_Module_Temp_roof_mount_cell_glassback = maximum_Module_Temp_roof_mount_cell_glassback - minimum_Module_Temp_roof_mount_cell_glassback
+            #Calculate the Solder Fatigue 
+            solderFatigue_roof_mount_cell_glassback = energyCalcs.solderFatigue(  level_1_df['Local Date Time'] ,  level_1_df['Cell Temperature(roof_mount_cell_glassback)'] , 54.8)            
             ##############################            
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_open_rack_cell_polymerback = level_1_df['Module Temperature(open_rack_cell_polymerback)'].min()
@@ -402,6 +410,8 @@ class finalOutputFrame:
             maximum_Module_Temp_open_rack_cell_polymerback = level_1_df['Module Temperature(open_rack_cell_polymerback)'].max()
             #Calculate the annual range ambient temperature        
             range_Module_Temp_open_rack_cell_polymerback = maximum_Module_Temp_open_rack_cell_polymerback - minimum_Module_Temp_open_rack_cell_polymerback
+            #Calculate the Solder Fatigue 
+            solderFatigue_open_rack_cell_polymerback = energyCalcs.solderFatigue(  level_1_df['Local Date Time'] ,  level_1_df['Cell Temperature(open_rack_cell_polymerback)'] , 54.8)            
             ##############################                    
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_insulated_back_polymerback = level_1_df['Module Temperature(insulated_back_polymerback)'].min()
@@ -411,6 +421,8 @@ class finalOutputFrame:
             maximum_Module_Temp_insulated_back_polymerback = level_1_df['Module Temperature(insulated_back_polymerback)'].max()
             #Calculate the annual range ambient temperature        
             range_Module_Temp_insulated_back_polymerback = maximum_Module_Temp_insulated_back_polymerback - minimum_Module_Temp_insulated_back_polymerback
+            #Calculate the Solder Fatigue 
+            solderFatigue_insulated_back_polymerback = energyCalcs.solderFatigue(  level_1_df['Local Date Time'] ,  level_1_df['Cell Temperature(insulated_back_polymerback)'] , 54.8)            
             ##############################            
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_open_rack_polymer_thinfilm_steel = level_1_df['Module Temperature(open_rack_polymer_thinfilm_steel)'].min()
@@ -420,6 +432,8 @@ class finalOutputFrame:
             maximum_Module_Temp_open_rack_polymer_thinfilm_steel = level_1_df['Module Temperature(open_rack_polymer_thinfilm_steel)'].max()
             #Calculate the annual range ambient temperature        
             range_Module_Temp_open_rack_polymer_thinfilm_steel = maximum_Module_Temp_open_rack_polymer_thinfilm_steel - minimum_Module_Temp_open_rack_polymer_thinfilm_steel
+            #Calculate the Solder Fatigue 
+            solderFatigue_open_rack_polymer_thinfilm_steel = energyCalcs.solderFatigue(  level_1_df['Local Date Time'] ,  level_1_df['Cell Temperature(open_rack_polymer_thinfilm_steel)'] , 54.8)            
             ##############################                    
             #Calculate the annual minimum ambient temperature
             minimum_Module_Temp_22x_concentrator_tracker = level_1_df['Module Temperature(22x_concentrator_tracker)'].min()
@@ -429,6 +443,8 @@ class finalOutputFrame:
             maximum_Module_Temp_22x_concentrator_tracker = level_1_df['Module Temperature(22x_concentrator_tracker)'].max()
             #Calculate the annual range ambient temperature        
             range_Module_Temp_22x_concentrator_tracker = maximum_Module_Temp_22x_concentrator_tracker - minimum_Module_Temp_22x_concentrator_tracker
+            #Calculate the Solder Fatigue 
+            solderFatigue_22x_concentrator_tracker = energyCalcs.solderFatigue(  level_1_df['Local Date Time'] ,  level_1_df['Cell Temperature(22x_concentrator_tracker)'] , 54.8)            
 
             # Add the data source to the location data description
             dataSource = pd.Series( utility.dataSource(fileNames[i]), index=['Data Source'])
@@ -568,6 +584,7 @@ class finalOutputFrame:
                                                       'Annual Average Module Temperature__open_rack_cell_glassback (C)':average_Module_Temp_open_rack_cell_glassback,
                                                       'Annual Maximum Module Temperature__open_rack_cell_glassback (C)':maximum_Module_Temp_open_rack_cell_glassback,
                                                       'Annual Range of Module Temperature__open_rack_cell_glassback (C)':range_Module_Temp_open_rack_cell_glassback,
+                                                      'Solder Fatigue Damage__open_rack_cell_glassback':solderFatigue_open_rack_cell_glassback, 
                                                      
                                                       'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)':average98Cell_roof_mount_cell_glassback,
                                                       'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)':average98Module_roof_mount_cell_glassback,
@@ -575,34 +592,39 @@ class finalOutputFrame:
                                                       'Annual Average Module Temperature__roof_mount_cell_glassback (C)':average_Module_Temp_roof_mount_cell_glassback,
                                                       'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)':maximum_Module_Temp_roof_mount_cell_glassback,
                                                       'Annual Range of Module Temperature__roof_mount_cell_glassback (C)':range_Module_Temp_roof_mount_cell_glassback,                                                         
-                                                     
+                                                      'Solder Fatigue Damage__roof_mount_cell_glassback':solderFatigue_roof_mount_cell_glassback,                                                      
+                                                        
                                                       'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)':average98CellTemp_open_rack_cell_polymerback,
                                                       'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)':average98Module_open_rack_cell_polymerback,
                                                       'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)':minimum_Module_Temp_open_rack_cell_polymerback,
                                                       'Annual Average Module Temperature__open_rack_cell_polymerback (C)':average_Module_Temp_open_rack_cell_polymerback,
                                                       'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)':maximum_Module_Temp_open_rack_cell_polymerback,
                                                       'Annual Range of Module Temperature__open_rack_cell_polymerback (C)':range_Module_Temp_open_rack_cell_polymerback,                                                         
-                                                     
+                                                      'Solder Fatigue Damage__open_rack_cell_polymerback':solderFatigue_open_rack_cell_polymerback,                                                      
+                                                        
                                                       'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)':average98Cell_insulated_back_polymerback,
                                                       'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)':average98Module_insulated_back_polymerback,
                                                       'Annual Minimum Module Temperature__insulated_back_polymerback (C)': minimum_Module_Temp_insulated_back_polymerback,
                                                       'Annual Average Module Temperature__insulated_back_polymerback (C)':average_Module_Temp_insulated_back_polymerback,
                                                       'Annual Maximum Module Temperature__insulated_back_polymerback (C)':maximum_Module_Temp_insulated_back_polymerback,
                                                       'Annual Range of Module Temperature__insulated_back_polymerback (C)':range_Module_Temp_insulated_back_polymerback,                                                         
-                                                     
+                                                      'Solder Fatigue Damage__insulated_back_polymerback':solderFatigue_insulated_back_polymerback,                                                      
+                                                        
                                                       'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)':average98Cell_open_rack_polymer_thinfilm_steel,
                                                       'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)':average98Module_open_rack_polymer_thinfilm_steel,
                                                       'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)':minimum_Module_Temp_open_rack_polymer_thinfilm_steel,
                                                       'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)':average_Module_Temp_open_rack_polymer_thinfilm_steel,
                                                       'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)':maximum_Module_Temp_open_rack_polymer_thinfilm_steel ,
                                                       'Annual Range of Module Temperature__open_rack_polymer_thinfilm_steel (C)':range_Module_Temp_open_rack_polymer_thinfilm_steel,                                                         
-                                                     
+                                                      'Solder Fatigue Damage__open_rack_polymer_thinfilm_steel':solderFatigue_open_rack_polymer_thinfilm_steel,                                                      
+                                                        
                                                       'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)':average98Cell_22x_concentrator_tracker,
                                                       'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)':average98Module_22x_concentrator_tracker, 
                                                       'Annual Minimum Module Temperature__22x_concentrator_tracker (C)':minimum_Module_Temp_22x_concentrator_tracker,
                                                       'Annual Average Module Temperature__22x_concentrator_tracker (C)':average_Module_Temp_22x_concentrator_tracker,
                                                       'Annual Maximum Module Temperature__22x_concentrator_tracker (C)':maximum_Module_Temp_22x_concentrator_tracker,
-                                                      'Annual Range of Module Temperature__22x_concentrator_tracker (C)':range_Module_Temp_22x_concentrator_tracker
+                                                      'Annual Range of Module Temperature__22x_concentrator_tracker (C)':range_Module_Temp_22x_concentrator_tracker,
+                                                      'Solder Fatigue Damage__22x_concentrator_tracker':solderFatigue_22x_concentrator_tracker
 
                                                       }, 
                                                    ignore_index=True)             

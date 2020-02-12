@@ -5,20 +5,138 @@ Contains energy algorithms for processing.
 """
 
 import numpy as np
-from numba import jit             
-import math
+from numba import jit 
+import pandas as pd   
+from scipy.constants import convert_temperature         
+#import math
 #import pandas as pd
 
 
 class energyCalcs:
 
     
+    def avgDailyTempChange( localTime , cell_Temp ):
+        '''
+        HELPER FUNCTION
+        
+        Get the average of a year for the daily maximum temperature change.
+        
+        For every 24hrs this function will find the delta between the maximum
+        temperature and minimun temperature.  It will then take the deltas for 
+        every day of the year and return the average delta. 
+    
+        
+        @param localTime           -timestamp series, Local time of specific site by the hour
+                                                year-month-day hr:min:sec
+                                                (Example) 2002-01-01 01:00:00
+        @param cell_Temp           -float series, Photovoltaic module cell 
+                                               temperature(Celsius) for every hour of a year
+                                               
+        @return avgDailyTempChange -float , Average Daily Temerature Change for 1-year (Celsius)
+        @return avgMaxCellTemp     -float , Average of Daily Maximum Temperature for 1-year (Celsius)
+        '''    
+        #Setup frame for vector processing
+        timeAndTemp_df = pd.DataFrame( columns = ['Cell Temperature'])
+        timeAndTemp_df['Cell Temperature'] = cell_Temp
+        timeAndTemp_df.index = localTime
+        timeAndTemp_df['month'] = timeAndTemp_df.index.month
+        timeAndTemp_df['day'] = timeAndTemp_df.index.day
+        
+        #Group by month and day to determine the max and min cell Temperature (C) for each day
+        dailyMaxCellTemp_series = timeAndTemp_df.groupby(['month','day'])['Cell Temperature'].max()
+        dailyMinCellTemp_series = timeAndTemp_df.groupby(['month','day'])['Cell Temperature'].min()
+        cellTempChange = pd.DataFrame({ 'Max': dailyMaxCellTemp_series, 'Min': dailyMinCellTemp_series})
+        cellTempChange['TempChange'] = cellTempChange['Max'] - cellTempChange['Min']
+        
+        #Find the average temperature change for every day of one year (C) 
+        avgDailyTempChange = cellTempChange['TempChange'].mean()
+        #Find daily maximum cell temperature average
+        avgMaxCellTemp  = dailyMaxCellTemp_series.mean()
+            
+        return avgDailyTempChange , avgMaxCellTemp 
 
+
+
+    def timesOverReversalNumber( cell_Temp , reversalTemp):
+        '''
+        HELPER FUNCTION
+        
+        Get the number of times a temperature increases or decreases over a 
+        specific temperature gradient.
+
+
+        @param cell_Temp           -float series, Photovoltaic module cell 
+                                               temperature(Celsius) 
+        @param reversalTemp        -float, temperature threshold to cross above and below
+
+        @param numChangesTempHist  -int , Number of times the temperature threshold is crossed                          
+        '''
+        #Find the number of times the temperature crosses over 54.8(C)
+        
+        
+        temp_df = pd.DataFrame()
+        temp_df['CellTemp'] = cell_Temp
+        temp_df['COMPARE'] = cell_Temp
+        temp_df['COMPARE'] = temp_df.COMPARE.shift(-1)
+        
+        #reversalTemp = 54.8
+        
+        temp_df['cross'] = (
+            ((temp_df.CellTemp >= reversalTemp) & (temp_df.COMPARE < reversalTemp)) |
+            ((temp_df.COMPARE > reversalTemp) & (temp_df.CellTemp <= reversalTemp)) |
+            (temp_df.CellTemp == reversalTemp))
+        
+        numChangesTempHist = temp_df.cross.sum()
+        
+        return numChangesTempHist
+        
+        
+    def solderFatigue( localTime , cell_Temp , reversalTemp):
+        '''
+        HELPER FUNCTION
+        
+        Get the Thermomechanical Fatigue of flat plate photovoltaic module solder joints.
+        Damage will be returned as the rate of solder fatigue for one year
+    
+        Bosco, N., Silverman, T. and Kurtz, S. (2020). Climate specific thermomechanical 
+        fatigue of flat plate photovoltaic module solder joints. [online] Available 
+        at: https://www.sciencedirect.com/science/article/pii/S0026271416300609 
+        [Accessed 12 Feb. 2020].
+        
+        @param localTime           -timestamp series, Local time of specific site by the hour
+                                                year-month-day hr:min:sec
+                                                (Example) 2002-01-01 01:00:00
+        @param cell_Temp           -float series, Photovoltaic module cell 
+                                               temperature(Celsius) for every hour of a year
+        @param reversalTemp        -float, temperature threshold to cross above and below
+        
+        @return damage           - float series, Acceleration factor of solder 
+                                                 fatigue for one year            
+        ''' 
+        
+       # cell_Temp = convert_temperature( cell_Temp , 'Celsius', 'Kelvin')
+       # reversalTemp = convert_temperature( reversalTemp , 'Celsius', 'Kelvin')
+        
+        
+        # Get the 1) Average of the Daily Maximum Cell Temperature (C)
+        #         2) Average of the Daily Maximum Temperature change avg(daily max - daily min)
+        #         3) Number of times the temperaqture crosses above or below the reversal Temperature
+        MeanDailyMaxCellTempChange , dailyMaxCellTemp_Average = energyCalcs.avgDailyTempChange( localTime , cell_Temp )
+        dailyMaxCellTemp_Average = convert_temperature( dailyMaxCellTemp_Average , 'Celsius', 'Kelvin')
+        numChangesTempHist = energyCalcs.timesOverReversalNumber( cell_Temp, reversalTemp )
+              
+        #k = Boltzmann's Constant
+        damage = 405.6 * (MeanDailyMaxCellTempChange **1.9) * \
+                         (numChangesTempHist**.33) * \
+                         np.exp(-(.12/(.00008617333262145*dailyMaxCellTemp_Average)))
+    
+        return damage
+    
     def power( cellTemp , globalPOA ):
         '''
         HELPER FUNCTION
         
-        Find the power produced from a solar module.
+        Find the relative power produced from a solar module.
     
         Model derived from Mike Kempe Calculation on paper
         (ADD IEEE reference)

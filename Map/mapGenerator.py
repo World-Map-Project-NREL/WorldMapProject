@@ -436,11 +436,77 @@ class mapGenerator:
             scaleMax = 20
             metric = " "
             mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
-                                      scaleMin, scaleMax , metric, True)            
+                                      scaleMin, scaleMax , metric, True)
             
-#path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'    
-#mapType = 'Avg Rate of Degradation Environmnet'   
-#mapGenerator.mapGeneratorDriver(path , mapType)            
+            
+            
+##################################################################################            
+            
+            
+        elif mapType == 'Solder Fatigue Damage__open_rack_cell_glassback':
+            title = 'Solder Fatigue Damage__open_rack_cell_glassback'    
+            mapSelect = 'Solder Fatigue Damage__open_rack_cell_glassback'
+            htmlString = 'Solder_Fatigue_Damage__open_rack_cell_glassback'    
+            scaleMin = 2000
+            scaleMax = 3000000
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, False) 
+            
+        elif mapType == 'Solder Fatigue Damage__roof_mount_cell_glassback':
+            title = 'Solder Fatigue Damage__roof_mount_cell_glassback'    
+            mapSelect = 'Solder Fatigue Damage__roof_mount_cell_glassback'
+            htmlString = 'Solder_Fatigue_Damage__roof_mount_cell_glassback'    
+            scaleMin = 1
+            scaleMax = 20
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, False)   
+
+        elif mapType == 'Solder Fatigue Damage__open_rack_cell_polymerback':
+            title = 'Solder Fatigue Damage__open_rack_cell_polymerback'    
+            mapSelect = 'Solder Fatigue Damage__open_rack_cell_polymerback'
+            htmlString = 'Solder_Fatigue_Damage__open_rack_cell_polymerback'    
+            scaleMin = 1
+            scaleMax = 20
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, False)   
+
+        elif mapType == 'Solder Fatigue Damage__insulated_back_polymerback':
+            title = 'Solder Fatigue Damage__insulated_back_polymerback'    
+            mapSelect = 'Solder Fatigue Damage__insulated_back_polymerback'
+            htmlString = 'Solder_Fatigue_Damage__insulated_back_polymerback'    
+            scaleMin = 1
+            scaleMax = 20
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, False)   
+
+        elif mapType == 'Solder Fatigue Damage__open_rack_polymer_thinfilm_steel':
+            title = 'Solder Fatigue Damage__open_rack_polymer_thinfilm_steel'    
+            mapSelect = 'Solder Fatigue Damage__open_rack_polymer_thinfilm_steel'
+            htmlString = 'Solder_Fatigue_Damage__open_rack_polymer_thinfilm_steel'    
+            scaleMin = 1
+            scaleMax = 20
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, False)  
+             
+        elif mapType == 'Solder Fatigue Damage__22x_concentrator_tracker':
+            title = 'Solder Fatigue Damage__22x_concentrator_tracker'    
+            mapSelect = 'Solder Fatigue Damage__22x_concentrator_tracker'
+            htmlString = 'Solder_Fatigue_Damage__22x_concentrator_tracker'    
+            scaleMin = 1
+            scaleMax = 20
+            metric = " "
+            mapGenerator.mapGenerator(path , mapSelect , htmlString , title, 
+                                      scaleMin, scaleMax , metric, False)              
+            
+            
+path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'    
+mapType = 'Solder Fatigue Damage__open_rack_cell_glassback'   
+mapGenerator.mapGeneratorDriver(path , mapType)            
             
 
             
