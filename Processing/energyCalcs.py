@@ -14,6 +14,31 @@ from scipy.constants import convert_temperature
 
 class energyCalcs:
 
+    def k( avgWVP ):
+        '''
+        
+        Determine the rate of water ingress of water through edge seal material
+    
+        
+        @param avgWVP              -float, Average of the Yearly water vapor 
+                                                pressure for 1 year
+
+        @return k                  -float , Ingress rate of water through edge seal
+        '''  
+        return .0013 * (avgWVP)**.4933
+
+    def edgeSealWidth( k ):
+        '''
+        
+        Determine the width of edge seal required for a 25 year water ingress
+    
+        @param k              -float, rate of water ingress
+
+        @return width                  -float , width of edge seal required for
+                                                    a 25 year water ingress (mm)
+        '''  
+        return k * (25 * 365.25 * 24)**.5
+    
     
     def avgDailyTempChange( localTime , cell_Temp ):
         '''
@@ -110,18 +135,15 @@ class energyCalcs:
                                                temperature(Celsius) for every hour of a year
         @param reversalTemp        -float, temperature threshold to cross above and below
         
-        @return damage           - float series, Acceleration factor of solder 
-                                                 fatigue for one year            
+        @return damage           - float series, Solder fatigue damage for a 
+                                                    time interval depending on localTime (kPa)          
         ''' 
-        
-       # cell_Temp = convert_temperature( cell_Temp , 'Celsius', 'Kelvin')
-       # reversalTemp = convert_temperature( reversalTemp , 'Celsius', 'Kelvin')
-        
         
         # Get the 1) Average of the Daily Maximum Cell Temperature (C)
         #         2) Average of the Daily Maximum Temperature change avg(daily max - daily min)
         #         3) Number of times the temperaqture crosses above or below the reversal Temperature
         MeanDailyMaxCellTempChange , dailyMaxCellTemp_Average = energyCalcs.avgDailyTempChange( localTime , cell_Temp )
+        #Needs to be in Kelvin for equation specs
         dailyMaxCellTemp_Average = convert_temperature( dailyMaxCellTemp_Average , 'Celsius', 'Kelvin')
         numChangesTempHist = energyCalcs.timesOverReversalNumber( cell_Temp, reversalTemp )
               
@@ -129,7 +151,8 @@ class energyCalcs:
         damage = 405.6 * (MeanDailyMaxCellTempChange **1.9) * \
                          (numChangesTempHist**.33) * \
                          np.exp(-(.12/(.00008617333262145*dailyMaxCellTemp_Average)))
-    
+        #Convert pascals to kilopascals
+        damage = damage/1000
         return damage
     
     def power( cellTemp , globalPOA ):

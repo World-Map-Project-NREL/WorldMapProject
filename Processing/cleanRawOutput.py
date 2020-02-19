@@ -4,33 +4,13 @@ Class contains utility functions functions pertaining to raw data imports
 @author: Derek Holsapple
 """
 
-import pandas as pd
 import glob
 import os 
 
 class cleanRawOutput:   
 
-    def dataSummaryFrame( path ):
-        '''
-        HELPER FUNCTION
-        
-        dataSummaryFrame()
-        
-        This will be a dataframe for a user reference table
-        Clean the dataframe and change variables for readability
-        
-        @param path           -String, path to current working directory
-        
-        @retrun formatted_df  -Dataframe, summarized dataframe for user 
-                                            reference table
-        '''
-        #import the pickle dataframe for the summary report
-        formatted_df = pd.read_pickle( path + \
-          '\\Pandas_Pickle_DataFrames\\Pickle_FirstRows\\' + \
-          'firstRowSummary_Of_CSV_Files.pickle')
-        return formatted_df
     
-        
+      
 
     def filesNameList( path ):
         '''

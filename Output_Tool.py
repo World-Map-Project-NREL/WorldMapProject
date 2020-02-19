@@ -8,6 +8,7 @@ within the Output_Tool.xlsm file
 @author: Derek Holsapple
 """
 import pandas as pd  
+import numpy as np
 import os            
 import xlwings as xw 
 import shutil        
@@ -213,34 +214,6 @@ def createLevel_1_Pickles( currentDirectory ):
     myWorkBook.sheets[mySheet].range(64,4).value = "All Files Sucessfully Saved"
 
 
-
-def outputFileSummary( currentDirectory ):
-    '''
-    XL Wings FUNCTION
-    
-    Output a report to a excel sheet with XLWings
-    
-    param@ currentDirectory      - String, where the excel file is located 
-                                        (passed as an argument from EXCEL) 
-    @return void                  - Creates a summary csv of all data
-    '''    
-    #XL Wings
-    ##############
-    # Use the xl wings caller function to establish handshake with excel
-    myWorkBook = xw.Book.caller() 
-    #Reference sheet 0    
-    mySheet = myWorkBook.sheets[1]
-    ##############
-    path = currentDirectory
-    # create a summary data frame from the helper method
-    summary_df = cleanRawOutput.dataSummaryFrame( path )
-    columnHeaders_list = list(summary_df)  
-    #Output the column names and summary dataframe
-    myWorkBook.sheets[mySheet].range(6,1).value = columnHeaders_list
-    myWorkBook.sheets[mySheet].range(7,1).value = summary_df.values.tolist()
-   
-
-
 def outputFileSummaryPostProcess( currentDirectory ):
     '''
     XL Wings FUNCTION
@@ -267,60 +240,7 @@ def outputFileSummaryPostProcess( currentDirectory ):
     myWorkBook.sheets[mySheet].range(10,1).value = columnHeaders_list
     myWorkBook.sheets[mySheet].range(11,1).value = summary_df.values.tolist()
  
-
-
     
-def searchRawPickle_Output( currentDirectory , userInput):    
-    '''
-    XL Wings FUNCTION
-    
-    searchRawPickle_Output()
-    
-    1) Take user input being a unique Identifier 
-    2) Search pickle files for a match
-    3) Output the raw pickle data to the excel sheet
-    
-    @param currentDirectory    - String, where the excel file is located 
-                                    (passed as an argument from EXCEL if using UDF)
-    @param userInput           -String, unique Identifier of a location 
-    
-    @return void               - Output of raw data to excel
-    '''    
-    #XL Wings
-    #############
-    # Use the xl wings caller function to establish handshake with excel
-    myWorkBook = xw.Book.caller()
-    #Reference sheet 1 "This is the second sheet, reference starts at 0"
-    mySheet = myWorkBook.sheets[2]
-    #############
-    path = currentDirectory
-    rawfileNames = cleanRawOutput.filesNameList( path )
-    summary_df = cleanRawOutput.dataSummaryFrame( path )
-    uniqueID_List = cleanRawOutput.stringList_UniqueID_List(rawfileNames)
-    booleanSearch = summary_df["Site Identifier Code"].str.find(userInput) 
-    for r in range( 0 , len(booleanSearch)):
-        if booleanSearch[r] == 0:
-            summaryRow_df = summary_df.iloc[r,:]
-            break
-    for i in range(0 , len( rawfileNames ) ):
-        #If the user input is a match with a raw data file
-        if userInput == uniqueID_List[i]:
-            # Pull out the raw pickle of the located file name
-            data_tuple = pd.read_pickle( path + \
-                '/Pandas_Pickle_DataFrames/Pickle_RawData/' + rawfileNames[i] )
-            #Unpack the tuple
-            location_series , raw_df = data_tuple            
-            rawcolumnHeaders_list = list(raw_df)
-            summaryColumnHeaders_list = list(summary_df) 
-            myWorkBook.sheets[mySheet].range(9,1).value = rawcolumnHeaders_list
-            myWorkBook.sheets[mySheet].range(10,1).value = raw_df.values.tolist()
-            myWorkBook.sheets[mySheet].range(6,1).value = summaryColumnHeaders_list
-            # Output the summary row for that location
-            myWorkBook.sheets[mySheet].range(7,1).value =  summaryRow_df.tolist()
-            #Stop the search for loop once the file is located
-            break  
-
-
 
 def search_Level1_Pickle_Output( currentDirectory , userInput):    
     '''
@@ -346,13 +266,8 @@ def search_Level1_Pickle_Output( currentDirectory , userInput):
     #############
     path = currentDirectory
     rawfileNames = cleanRawOutput.filesNameList( path )
-    summary_df = cleanRawOutput.dataSummaryFrame( path )
     uniqueID_List = cleanRawOutput.stringList_UniqueID_List(rawfileNames)
-    booleanSearch = summary_df["Site Identifier Code"].str.find(userInput) 
-    for r in range( 0 , len(booleanSearch)):
-        if booleanSearch[r] == 0:
-            summaryRow_df = summary_df.iloc[r,:]
-            break
+
     for i in range(0 , len( rawfileNames ) ):
         #If the user input is a match with a raw data file
         if userInput == uniqueID_List[i]:
@@ -362,11 +277,15 @@ def search_Level1_Pickle_Output( currentDirectory , userInput):
             #Unpack the tuple
             location_series , raw_df = data_tuple
             rawcolumnHeaders_list = list(raw_df)
-            summaryColumnHeaders_list = list(summary_df)
             myWorkBook.sheets[mySheet].range(9,1).value = rawcolumnHeaders_list
             myWorkBook.sheets[mySheet].range(10,1).value = raw_df.values.tolist()
-            myWorkBook.sheets[mySheet].range(6,1).value = summaryColumnHeaders_list
-            myWorkBook.sheets[mySheet].range(7,1).value =  summaryRow_df.tolist()
+            myWorkBook.sheets[mySheet].range(6,1).value = location_series.index.tolist()
+            #nan value do not transfer to excel
+            location_series = location_series.replace(np.nan, 'NONE', regex=True)
+            location_series = location_series.replace('', 'NONE', regex=True)
+            location_series = location_series.replace('unknown', 'NONE', regex=True)
+            
+            myWorkBook.sheets[mySheet].range(7,1).value =  location_series.tolist()
             #Stop the search for loop once the file is located
             break
 
@@ -557,6 +476,6 @@ def outputVantHoffCalc( currentDirectory , configType , refTemp , Tf , x , Icham
     
   
     
-    
-currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
-    
+#userInput = '711_30'
+#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
+#path = currentDirectory  

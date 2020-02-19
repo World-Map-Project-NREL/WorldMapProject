@@ -504,9 +504,9 @@ class mapGenerator:
                                       scaleMin, scaleMax , metric, False)              
             
             
-path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'    
-mapType = 'Solder Fatigue Damage__open_rack_cell_glassback'   
-mapGenerator.mapGeneratorDriver(path , mapType)            
+#path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'    
+#mapType = 'Solder Fatigue Damage__open_rack_cell_glassback'   
+#mapGenerator.mapGeneratorDriver(path , mapType)            
             
 
             

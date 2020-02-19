@@ -13,7 +13,7 @@ Created on Mon Nov  4 08:15:40 2019
 """
 
 from Processing.cleanRawOutput import cleanRawOutput
-#from cleanRawOutput import cleanRawOutput
+#from cleanRawOutput import cleanRawOutput #DELETE THE CLASS LATER
 import pandas as pd
 from bokeh.plotting import  output_file, show
 from bokeh.models import ColumnDataSource
@@ -42,22 +42,36 @@ class plotSite:
         #Set path
         path = currentDirectory
         # Get the file name of each raw data pickle,  the unique identifier is inside this list
-        rawfileNames = cleanRawOutput.filesNameList( path )
+ #       rawfileNames = cleanRawOutput.filesNameList( path )
         # Reference the summary frame to pull out the user Input row and display
-        summary_df = cleanRawOutput.dataSummaryFrame( path )
+ #       summary_df = pd.read_pickle( path + \
+ #               '/Pandas_Pickle_DataFrames/Pickle_Level1_Summary/Pickle_Level1_Summary.pickle')
         #Create a list of unique identifiers for the file string names "See helper functions"
+ #       uniqueID_List = cleanRawOutput.stringList_UniqueID_List(rawfileNames)
+ #       booleanSearch = summary_df["Site Identifier Code"].str.find(fileID) 
+ #       for r in range( 0 , len(booleanSearch)):
+ #           if booleanSearch[r] == 0:
+ #               summaryRow_df = summary_df.iloc[r,:]
+ #               break
+ #       for i in range(0 , len( rawfileNames ) ):
+            #If the user input is a match with a raw data file
+  #          if fileID == uniqueID_List[i]:
+                # Pull out the raw pickle of the located file name
+                
+        path = currentDirectory
+        rawfileNames = cleanRawOutput.filesNameList( path )
         uniqueID_List = cleanRawOutput.stringList_UniqueID_List(rawfileNames)
-        booleanSearch = summary_df["Site Identifier Code"].str.find(fileID) 
-        for r in range( 0 , len(booleanSearch)):
-            if booleanSearch[r] == 0:
-                summaryRow_df = summary_df.iloc[r,:]
-                break
+
         for i in range(0 , len( rawfileNames ) ):
             #If the user input is a match with a raw data file
             if fileID == uniqueID_List[i]:
                 # Pull out the raw pickle of the located file name
+                data_tuple = pd.read_pickle( path + \
+                   '/Pandas_Pickle_DataFrames/Pickle_Level1/' + rawfileNames[i] )         
+
+                
                 data_tuple = pd.read_pickle( path + '/Pandas_Pickle_DataFrames/Pickle_Level1/' + rawfileNames[i] )
-        return data_tuple , summaryRow_df
+        return data_tuple 
     
     
     
@@ -87,10 +101,10 @@ class plotSite:
         ''' 
 
         #Access the level_1_df site specific, also collect that sites series data
-        data_tuple , siteLocation_series = plotSite.findPickleFile(fileID , currentDirectory)
+        data_tuple  = plotSite.findPickleFile(fileID , currentDirectory)
         
         # Unpack the tuple
-        site_location , level_1_df = data_tuple
+        siteLocation_series , level_1_df = data_tuple
         ####BOKEH PLOT########
         
         #Create the html to be exported
@@ -154,6 +168,7 @@ class plotSite:
         #Add the hover tool to the map
         p.add_tools(hover_labels)
         
+        siteLocation_series = siteLocation_series.apply(str)
         #Add site data to the Legend
         legend = Legend(items=[
             LegendItem(label="Station Name: " + siteLocation_series.iloc[1], index=0),
@@ -166,7 +181,6 @@ class plotSite:
         #p.legend.location = "bottom_left"
         
         p.add_layout(legend)
-        
         
         # Show the plot
         show(p)        
@@ -855,11 +869,18 @@ class plotSite:
                                     toolTipMetric)      
  
 
+#currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
+
+#fileID = '690190'
 
 
-
-
-
+#selector = 'POA Global(W/m^2)'
+#graphTitle = 'Plane Of Array Global (W/m^2)'
+#outputHTML = 'POA_Global'
+#xAxis = 'Hours in a Year'
+#yAxis = 'Plane Of Array Global (W/m^2)'
+#toolTipLabel = 'POA Global'
+#toolTipMetric = ' (W/m^2)'
 
 
 
