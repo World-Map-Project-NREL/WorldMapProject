@@ -28,47 +28,62 @@ class finalOutputFrame:
     
     
     
-    def level_1_df_toPickle( currentDirectory ):
+    def moduleProcessing_toPickle( currentDirectory , selector , max_angle, gcr):
         '''
         EXECUTION METHOD
         
         level_1_df()
         
-        Create level 1 processed dataframe and store it into a .pickle file. 
-        The level 1 processing will be a large computation calculating all site 
-        locations withing the TMY3, CWEC and IWEC datasets.
-        The results of computation will be stored as a pandas dataframe .pickle   
-        Each location file will contain its own .pickle file.  
-        Other energy calculations will be implemented in this function and
-        stored in the dataframe 
+        Create pickle files contailing tuples with site location data and hourly processed TMY dataframes
+        All raw data must follow the cleaning format from previous aggregating processes.
+            *see rawDataImport.py class and function rawDataToTuple() for correct format
         
-        Method:
-        1) Use a implementation of the NREL SPA algorithm described in [1] to calculate
-            the solar positions including the Solar Zenith, Solar Azimuth, and Solar Elevation
+        *Assumption: All module configurations assume that they are on a flat surface
+                    (i.e this program does not take into account of modules placed on a hill)
+        Once raw data is imported select whether you want to model 
+            1) Fixed tilt [2]
+                * Fixed tilt will use the Latitude location to set module tilt
+                        northern hemisphere sites will have a module azimuth = 180
+                        southern hemesphere sites will have a module azimuth = 0
+            2) Single-Axis Tracker with back tracking [1],[2].
+                * Inputs required will be Ground Cover Ratio (GRC) and max_angle 
+                        Modules will face East/West with axis bar facing North/South
+            
+            
+        References
+        ----------
+        [1]	Lorenzo, E et al., 2011, “Tracking and back-tracking”, Prog. in
+        Photovoltaics: Research and Applications, v. 19, pp. 747-753.
+
+        [2] I. Reda and A. Andreas, Solar position algorithm for solar radiation
+        applications. Solar Energy, vol. 76, no. 5, pp. 577-589, 2004.
+        NREL SPA code: http://rredc.nrel.gov/solar/codesandalgorithms/spa/
         
-        2) Calculate the Plane of Irradiance based off of Solar Zenith [2].
-            
-            I_{tot} = I_{beam} + I_{sky diffuse} + I_{ground}
-            
-        3) Calculate the solar module temperature based on the Kings model
-    
-            References
-            ----------
-            [1] I. Reda and A. Andreas, Solar position algorithm for solar radiation
-            applications. Solar Energy, vol. 76, no. 5, pp. 577-589, 2004.
-            NREL SPA code: http://rredc.nrel.gov/solar/codesandalgorithms/spa/
-            
-            [2] William F. Holmgren, Clifford W. Hansen, and Mark A. Mikofski. 
-            “pvlib python: a python package for modeling solar energy systems.”
-            Journal of Open Source Software, 3(29), 884, (2018). 
-            https://doi.org/10.21105/joss.00884
+        [3] William F. Holmgren, Clifford W. Hansen, and Mark A. Mikofski. 
+        “pvlib python: a python package for modeling solar energy systems.”
+        Journal of Open Source Software, 3(29), 884, (2018). 
+        https://doi.org/10.21105/joss.00884
+        
+
             
         @ param currentDirectory  -String, of current working directory    
-        @ param surface_tilt      -double, degrees of surface tilt
-        @ param surface_azimuth   -double, degrees of surface azimuthe    
+        @ param selector          -String, "fixedTilt" : solar module at fixed tile (latitude tilt)
+                                           "singleAxisTracker": solar module with single axis tracker 
+                                                (modules will be facing east/west with axis bar facing north/south)
+        
+        @ param max_angle         -int, angle of rotation capability of single axis module
+                                        *90 is standard, 180 will allow full rotation, i.e the panel can filp upside down
+        @ param gcr               -float, Ground Cover Ratio of a single axis-system
+                                             A tracker system with modules 2 meters wide,
+                                             centered on the tracking axis, with 6 meters 
+                                             between the tracking axes has a gcr of 2/6=0.333[3].   
                                             
-        @ return                  -void, stores processed .pickle files into directory
-                                        \Pandas_Pickle_DataFrames\Pickle_Level1 
+        @ return                  -void, stores processed .pickle files into directory fro each site location
+                                            A unique ID will be given to each file name *UniqueID.pickle
+                                        Fixed Tilt: \Pandas_Pickle_DataFrames\Pickle_Level1 
+                                        Single Axis Tracker: \Pandas_Pickle_Dataframes\Pickle_Level1_SingleAxisTracker
+                                        
+                                        
         '''       
         #XLWINGS user feedback
         wb = xw.Book(currentDirectory + '\Output_Tool.xlsm')
@@ -84,6 +99,7 @@ class finalOutputFrame:
                                                      'Data Source',
                                                      'Site latitude',
                                                      'Site longitude',
+                                                     'Module Tilt Type',
                                                      'Site time zone (Universal time + or -)',
                                                      'Site elevation (meters)',
                                                      'Koppen-Geiger climate classification',
@@ -115,6 +131,8 @@ class finalOutputFrame:
 
                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_glassback (C)', 
                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_cell_glassback (C)',
+                                                     'Annual Average (2nd Percentile) Cell Temperature__open_rack_cell_glassback (C)', 
+                                                     'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_glassback (C)',
                                                      'Annual Minimum Module Temperature__open_rack_cell_glassback (C)',
                                                      'Annual Average Module Temperature__open_rack_cell_glassback (C)',
                                                      'Annual Maximum Module Temperature__open_rack_cell_glassback (C)',
@@ -123,6 +141,8 @@ class finalOutputFrame:
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Average (2nd Percentile) Cell Temperature__roof_mount_cell_glassback (C)',
+                                                     'Annual Average (2nd Percentile) Module Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Average Module Temperature__roof_mount_cell_glassback (C)',
                                                      'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)',
@@ -131,6 +151,8 @@ class finalOutputFrame:
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Average (2nd Percentile) Cell Temperature__open_rack_cell_polymerback (C)',
+                                                     'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Average Module Temperature__open_rack_cell_polymerback (C)',
                                                      'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)',
@@ -139,6 +161,8 @@ class finalOutputFrame:
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Average (2nd Percentile) Cell Temperature__insulated_back_polymerback (C)',
+                                                     'Annual Average (2nd Percentile) Module Temperature__insulated_back_polymerback (C)',
                                                      'Annual Minimum Module Temperature__insulated_back_polymerback (C)',
                                                      'Annual Average Module Temperature__insulated_back_polymerback (C)',
                                                      'Annual Maximum Module Temperature__insulated_back_polymerback (C)',
@@ -147,6 +171,8 @@ class finalOutputFrame:
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Average (2nd Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)',
+                                                     'Annual Average (2nd Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)',
                                                      'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)',
@@ -154,7 +180,9 @@ class finalOutputFrame:
                                                      'Solder Fatigue Damage__open_rack_polymer_thinfilm_steel (kPa)', 
                                                      
                                                      'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)',
-                                                     'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)', 
+                                                     'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)',
+                                                     'Annual Average (2nd Percentile) Cell Temperature__22x_concentrator_tracker (C)',
+                                                     'Annual Average (2nd Percentile) Module Temperature__22x_concentrator_tracker (C)',
                                                      'Annual Minimum Module Temperature__22x_concentrator_tracker (C)',
                                                      'Annual Average Module Temperature__22x_concentrator_tracker (C)',
                                                      'Annual Maximum Module Temperature__22x_concentrator_tracker (C)',
@@ -164,8 +192,14 @@ class finalOutputFrame:
                                                       ])
         
         #Output to the user how many files need to be processed via XLWings
-        wb.sheets[mySheet].range(67,6).value = len(fileNames)
-          
+        if selector == 'fixedTilt':
+            wb.sheets[mySheet].range(67,6).value = len(fileNames)
+        elif selector == 'singleAxisTracker': 
+            wb.sheets[mySheet].range(67,15).value = len(fileNames)        
+        
+        
+        
+        
         for i in range (0 , len(fileNames)):
             
             #Import the aggregated tuple of each site (tuple was aggregated from RawDataImport.class)
@@ -175,17 +209,7 @@ class finalOutputFrame:
             
             level_1_df = raw_df
             
-            #hoursAheadorBehind will be the number of hours ahead or behind universal time
-#            hoursAheadOrBehind = locationData.get(key = 'Site time zone (Universal time + or -)')
-            #If the latitude is in the southern hemisphere of the globe then surface azimuth of the panel must be 0 degrees
-            if latitude <= 0:
-                surface_azimuth = 0
-            # If the latitude is in the northern hemisphere set the panel azimuth to 180
-            else:
-                surface_azimuth = 180 
-            # Set the suface tilt to the latitude   
-            # PVlib requires the latitude tilt to always be positve for its irradiance calculations
-            surface_tilt = abs(latitude)        
+       
 
 #            level_1_df = firstClean.cleanedFrame( raw_df , hoursAheadOrBehind , longitude )
             ################  
@@ -198,16 +222,61 @@ class finalOutputFrame:
                                                                                      pressure=None, 
                                                                                      method='nrel_numba', 
                                                                                      temperature=12 ) 
+            
             level_1_df['Solar Zenith'] = solarPosition_df['zenith'].values
             level_1_df['Solar Azimuth'] = solarPosition_df['azimuth'].values
             level_1_df['Solar Elevation'] = solarPosition_df['elevation'].values
+
             
-            # Calculates the angle of incidence of the solar vector on a surface. 
-            # This is the angle between the solar vector and the surface normal.
-            aoi = pvlib.irradiance.aoi(surface_tilt, surface_azimuth,
+            # Set up parameters to feed Irradiance calculations depending on module configuration and angle type
+            
+            # Fixed Tilt module at Latitude Tilt
+            if selector == 'fixedTilt':
+            
+                #If the latitude is in the southern hemisphere of the globe then surface azimuth of the panel must be 0 degrees
+                if latitude <= 0:
+                    surface_azimuth = 0
+                # If the latitude is in the northern hemisphere set the panel azimuth to 180
+                else:
+                    surface_azimuth = 180 
+                # Set the suface tilt to the latitude   
+                # PVlib requires the latitude tilt to always be positve for its irradiance calculations
+                surface_tilt = abs(latitude) 
+                level_1_df['Module Tilt (degrees)'] = surface_tilt
+                level_1_df['Module Azimuth (degrees)'] = surface_azimuth
+                
+                # Calculates the angle of incidence of the solar vector on a surface for fixed tilt module. 
+                # This is the angle between the solar vector and the surface normal.
+                aoi = pvlib.irradiance.aoi(surface_tilt, surface_azimuth,
                            solarPosition_df['apparent_zenith'], solarPosition_df['azimuth'])
-            #Calculate the angle of incidence
-            level_1_df['Angle of incidence'] = aoi.values
+                #Calculate the angle of incidence
+                level_1_df['Angle of incidence'] = aoi.values                
+            
+            # Single-Axis Tracker with backtracking capabilities
+            elif selector == 'singleAxisTracker':
+                
+                # Get output from single-axis tracke, we need the module surface tilt and azimuth
+                singleAxisTracker = pvlib.tracking.singleaxis(level_1_df['Solar Zenith'], 
+                                                              level_1_df['Solar Azimuth'], 
+                                                              max_angle=max_angle, 
+                                                              backtrack=True, 
+                                                              gcr=gcr)
+                
+                #Get rid of nan variables
+                # The Module will be flat at night
+                # Set the azimuth to 90 and the tilt to 0 for nan cells,  This 
+                    #will simulate the night behavior of the single axis-tracker system
+                singleAxisTracker['surface_azimuth'] = singleAxisTracker['surface_azimuth'].fillna(90)
+                singleAxisTracker['surface_tilt'] = singleAxisTracker['surface_tilt'].fillna(0)
+                singleAxisTracker['aoi'] = singleAxisTracker['aoi'].fillna(0)
+                
+                surface_tilt = singleAxisTracker['surface_tilt']
+                level_1_df['Module Tilt (degrees)'] = singleAxisTracker['surface_tilt']
+                surface_azimuth = singleAxisTracker['surface_azimuth']
+                level_1_df['Module Azimuth (degrees)'] = surface_azimuth
+            
+                level_1_df['Angle of incidence'] = singleAxisTracker['aoi']
+
             ##############################            
             # Calculate the POA
             totalIrradiance_df = pvlib.irradiance.get_total_irradiance(surface_tilt, 
@@ -283,45 +352,75 @@ class finalOutputFrame:
 
             # Calculate the top 2% 
             #Determine how many elements are equal to 2% of the length of the data
-            top2Precent = int( len( level_1_df ) * .02 )
+            num2Precent = int( len( level_1_df ) * .02 )
+            
             # Pull out the top 2% of the data.  8760 points will take the highest 175 values          
-            open_rack_cell_glassback_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(open_rack_cell_glassback)' ) 
-            open_rack_cell_glassback_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(open_rack_cell_glassback)' )
+            open_rack_cell_glassback_top2Precent_Cell_Temp = level_1_df.nlargest( num2Precent , 'Cell Temperature(open_rack_cell_glassback)' ) 
+            open_rack_cell_glassback_top2Precent_Module_Temp = level_1_df.nlargest( num2Precent , 'Module Temperature(open_rack_cell_glassback)' )
+            #Pull out the lowest 20% of the data 8760 points will be 1752 datapoints
+            open_rack_cell_glassback_low20Precent_Cell_Temp = level_1_df.nsmallest( num2Precent , 'Cell Temperature(open_rack_cell_glassback)' ) 
+            open_rack_cell_glassback_low20Precent_Module_Temp = level_1_df.nsmallest( num2Precent , 'Module Temperature(open_rack_cell_glassback)' )            
             ##############################            
-            roof_mount_cell_glassback_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(roof_mount_cell_glassback)' ) 
-            roof_mount_cell_glassback_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(roof_mount_cell_glassback)' )        
+            roof_mount_cell_glassback_top2Precent_Cell_Temp = level_1_df.nlargest( num2Precent , 'Cell Temperature(roof_mount_cell_glassback)' ) 
+            roof_mount_cell_glassback_top2Precent_Module_Temp = level_1_df.nlargest( num2Precent , 'Module Temperature(roof_mount_cell_glassback)' ) 
+            #Pull out the lowest 20% of the data 8760 points will be 1752 datapoints
+            roof_mount_cell_glassback_low20Precent_Cell_Temp = level_1_df.nsmallest( num2Precent , 'Cell Temperature(roof_mount_cell_glassback)' ) 
+            roof_mount_cell_glassback_low20Precent_Module_Temp = level_1_df.nsmallest( num2Precent , 'Module Temperature(roof_mount_cell_glassback)' )            
             ##############################            
-            open_rack_cell_polymerback_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(open_rack_cell_polymerback)' ) 
-            open_rack_cell_polymerback_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(open_rack_cell_polymerback)' )        
+            open_rack_cell_polymerback_top2Precent_Cell_Temp = level_1_df.nlargest( num2Precent , 'Cell Temperature(open_rack_cell_polymerback)' ) 
+            open_rack_cell_polymerback_top2Precent_Module_Temp = level_1_df.nlargest( num2Precent , 'Module Temperature(open_rack_cell_polymerback)' ) 
+            #Pull out the lowest 20% of the data 8760 points will be 1752 datapoints
+            open_rack_cell_polymerback_low20Precent_Cell_Temp = level_1_df.nsmallest( num2Precent , 'Cell Temperature(open_rack_cell_polymerback)' ) 
+            open_rack_cell_polymerback_low20Precent_Module_Temp = level_1_df.nsmallest( num2Precent , 'Module Temperature(open_rack_cell_polymerback)' )            
             ##############################            
-            insulated_back_polymerback_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(insulated_back_polymerback)' ) 
-            insulated_back_polymerback_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(insulated_back_polymerback)' )        
+            insulated_back_polymerback_top2Precent_Cell_Temp = level_1_df.nlargest( num2Precent , 'Cell Temperature(insulated_back_polymerback)' ) 
+            insulated_back_polymerback_top2Precent_Module_Temp = level_1_df.nlargest( num2Precent , 'Module Temperature(insulated_back_polymerback)' )
+            #Pull out the lowest 20% of the data 8760 points will be 1752 datapoints
+            insulated_back_polymerback_low20Precent_Cell_Temp = level_1_df.nsmallest( num2Precent , 'Cell Temperature(insulated_back_polymerback)' ) 
+            insulated_back_polymerback_low20Precent_Module_Temp = level_1_df.nsmallest( num2Precent , 'Module Temperature(insulated_back_polymerback)' )            
             ##############################            
-            open_rack_polymer_thinfilm_steel_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(open_rack_polymer_thinfilm_steel)' ) 
-            open_rack_polymer_thinfilm_steel_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(open_rack_polymer_thinfilm_steel)' )        
+            open_rack_polymer_thinfilm_steel_top2Precent_Cell_Temp = level_1_df.nlargest( num2Precent , 'Cell Temperature(open_rack_polymer_thinfilm_steel)' ) 
+            open_rack_polymer_thinfilm_steel_top2Precent_Module_Temp = level_1_df.nlargest( num2Precent , 'Module Temperature(open_rack_polymer_thinfilm_steel)' )
+            #Pull out the lowest 20% of the data 8760 points will be 1752 datapoints 
+            open_rack_polymer_thinfilm_steel_low20Precent_Cell_Temp = level_1_df.nsmallest( num2Precent , 'Cell Temperature(open_rack_polymer_thinfilm_steel)' ) 
+            open_rack_polymer_thinfilm_steel_low20Precent_Module_Temp = level_1_df.nsmallest( num2Precent , 'Module Temperature(open_rack_polymer_thinfilm_steel)' )            
             ##############################              
-            _22x_concentrator_tracker_top2Precent_Cell_Temp = level_1_df.nlargest( top2Precent , 'Cell Temperature(22x_concentrator_tracker)' ) 
-            _22x_concentrator_tracker_top2Precent_Module_Temp = level_1_df.nlargest( top2Precent , 'Module Temperature(22x_concentrator_tracker)' )        
+            _22x_concentrator_tracker_top2Precent_Cell_Temp = level_1_df.nlargest( num2Precent , 'Cell Temperature(22x_concentrator_tracker)' ) 
+            _22x_concentrator_tracker_top2Precent_Module_Temp = level_1_df.nlargest( num2Precent , 'Module Temperature(22x_concentrator_tracker)' )
+            #Pull out the lowest 20% of the data 8760 points will be 1752 datapoints
+            _22x_concentrator_tracker_low20Precent_Cell_Temp = level_1_df.nsmallest( num2Precent , 'Cell Temperature(22x_concentrator_tracker)' ) 
+            _22x_concentrator_tracker_low20Precent_Module_Temp = level_1_df.nsmallest( num2Precent , 'Module Temperature(22x_concentrator_tracker)' )            
 
-            # Find the average of the top 98th percentile for Module/Cell Temperature 
+            # Find the average of the top 98th percentile and the lowest 20th percentile for Module/Cell Temperature 
             average98Cell_open_rack_cell_glassback = open_rack_cell_glassback_top2Precent_Cell_Temp['Cell Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
             average98Module_open_rack_cell_glassback = open_rack_cell_glassback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
+            average2ndCell_open_rack_cell_glassback = open_rack_cell_glassback_low20Precent_Cell_Temp['Cell Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True) 
+            average2ndModule_open_rack_cell_glassback = open_rack_cell_glassback_low20Precent_Module_Temp['Module Temperature(open_rack_cell_glassback)'].mean(axis = 0, skipna = True)             
             ##############################            
             average98Cell_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Cell_Temp['Cell Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True) 
-            average98Module_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Module_Temp['Module Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True)         
+            average98Module_roof_mount_cell_glassback = roof_mount_cell_glassback_top2Precent_Module_Temp['Module Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True)  
+            average2ndCell_roof_mount_cell_glassback = roof_mount_cell_glassback_low20Precent_Cell_Temp['Cell Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True) 
+            average2ndModule_roof_mount_cell_glassback = roof_mount_cell_glassback_low20Precent_Module_Temp['Module Temperature(roof_mount_cell_glassback)'].mean(axis = 0, skipna = True)             
             ##############################            
             average98CellTemp_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Cell_Temp['Cell Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True) 
-            average98Module_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True)         
+            average98Module_open_rack_cell_polymerback = open_rack_cell_polymerback_top2Precent_Module_Temp['Module Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True)
+            average2ndCellTemp_open_rack_cell_polymerback = open_rack_cell_polymerback_low20Precent_Cell_Temp['Cell Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True) 
+            average2ndModule_open_rack_cell_polymerback = open_rack_cell_polymerback_low20Precent_Module_Temp['Module Temperature(open_rack_cell_polymerback)'].mean(axis = 0, skipna = True)            
             ##############################            
             average98Cell_insulated_back_polymerback = insulated_back_polymerback_top2Precent_Cell_Temp['Cell Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True) 
-            average98Module_insulated_back_polymerback =  insulated_back_polymerback_top2Precent_Module_Temp['Module Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True)         
+            average98Module_insulated_back_polymerback =  insulated_back_polymerback_top2Precent_Module_Temp['Module Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True)
+            average2ndCell_insulated_back_polymerback = insulated_back_polymerback_low20Precent_Cell_Temp['Cell Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True) 
+            average2ndModule_insulated_back_polymerback =  insulated_back_polymerback_low20Precent_Module_Temp['Module Temperature(insulated_back_polymerback)'].mean(axis = 0, skipna = True)            
             ##############################            
             average98Cell_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Cell_Temp['Cell Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True) 
-            average98Module_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Module_Temp['Module Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True)         
+            average98Module_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_top2Precent_Module_Temp['Module Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True)  
+            average2ndCell_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_low20Precent_Cell_Temp['Cell Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True) 
+            average2ndModule_open_rack_polymer_thinfilm_steel = open_rack_polymer_thinfilm_steel_low20Precent_Module_Temp['Module Temperature(open_rack_polymer_thinfilm_steel)'].mean(axis = 0, skipna = True)             
             ##############################            
             average98Cell_22x_concentrator_tracker = _22x_concentrator_tracker_top2Precent_Cell_Temp['Cell Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True) 
             average98Module_22x_concentrator_tracker = _22x_concentrator_tracker_top2Precent_Module_Temp['Module Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True)         
-
+            average2ndCell_22x_concentrator_tracker = _22x_concentrator_tracker_low20Precent_Cell_Temp['Cell Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True) 
+            average2ndModule_22x_concentrator_tracker = _22x_concentrator_tracker_low20Precent_Module_Temp['Module Temperature(22x_concentrator_tracker)'].mean(axis = 0, skipna = True)
             
             #Calculate the dew point yield for each location.  Find the sum of all hourly data for a yearly yield
             siteElevation = locationData.get(key = 'Site elevation (meters)')/1000 #Dew Yield function requires kilometers
@@ -453,11 +552,22 @@ class finalOutputFrame:
             # Add the data source to the location data description
             dataSource = pd.Series( utility.dataSource(fileNames[i]), index=['Data Source'])
             locationData = locationData.append( dataSource )
+            # add if we are doing single-axis tracer or fixed tilt.
+            if selector == 'fixedTilt':
+                moduleType = pd.Series( 'Fixed Tilt', index=['Module Type'])
+                locationData = locationData.append( moduleType )
+            # Single-Axis Tracker with backtracking capabilities
+            elif selector == 'singleAxisTracker':
+                moduleType = pd.Series( 'Single-Axis Tracker (Back Tracking)', index=['Module Type'])
+                locationData = locationData.append( moduleType )            
+            
 
             level_1_df = level_1_df.reindex(columns = ['Local Date Time',
                                                        'Universal Date Time',
                                                        'Local Solar Time',
                                                        'Hourly Local Solar Time',
+                                                       'Module Tilt (degrees)',
+                                                       'Module Azimuth (degrees)',
                                                        'Albedo',
                                                        'Corrected Albedo',
                                                        'Dry-bulb temperature',
@@ -483,7 +593,6 @@ class finalOutputFrame:
                                                        'POA Ground Diffuse',
                                                        'POA Sky Diffuse',
                                                        'Power',
-                                                       'Rate of Degradation',
                                                        'Cell Temperature(open_rack_cell_glassback)',
                                                        'Module Temperature(open_rack_cell_glassback)',
                                                        'Cell Temperature(roof_mount_cell_glassback)',
@@ -521,7 +630,6 @@ class finalOutputFrame:
                                           'POA Global' :'POA Global(W/m^2)', 
                                           'POA Ground Diffuse':'POA Ground Diffuse(W/m^2)', 
                                           'POA Sky Diffuse':'POA Sky Diffuse(W/m^2)',
-                                          'Rate of Degradation':'Rate of Degradation',
                                           'Cell Temperature(open_rack_cell_glassback)':'Cell Temperature(open_rack_cell_glassback)(C)',
                                           'Module Temperature(open_rack_cell_glassback)':'Module Temperature(open_rack_cell_glassback)(C)',
                                           'Cell Temperature(roof_mount_cell_glassback)':'Cell Temperature(roof_mount_cell_glassback)(C)',
@@ -538,9 +646,16 @@ class finalOutputFrame:
     
             #Store the level 1 processed Data into a tuple as a pickle file
             level1_tuple = ( locationData , level_1_df )
-            with open(currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[i], 'wb') as f:
-                pickle.dump(level1_tuple, f)
-
+            
+            # Save the files in the appropriate directory, sigle axis tracker or fixed tilt
+            if selector == 'fixedTilt':
+                with open(currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1\\' + fileNames[i], 'wb') as f:
+                    pickle.dump(level1_tuple, f)
+            # Single-Axis Tracker with backtracking capabilities
+            elif selector == 'singleAxisTracker':
+                with open(currentDirectory + '\\Pandas_Pickle_DataFrames\\Pickle_Level1_SingleAxisTracker\\' + fileNames[i], 'wb') as f:
+                    pickle.dump(level1_tuple, f)              
+            
             #########
             #LEVEL 1 SITE SPECIFC DATAFRAME COMPLETE
             #########
@@ -555,6 +670,7 @@ class finalOutputFrame:
                                                       'Data Source': locationData.get(key = 'Data Source'), 
                                                       'Site latitude': locationData.get(key = 'Site latitude'), 
                                                       'Site longitude': locationData.get(key = 'Site longitude'),
+                                                      'Module Tilt Type': locationData.get(key = 'Module Type'),
                                                       'Site time zone (Universal time + or -)': locationData.get(key = 'Site time zone (Universal time + or -)'),
                                                       'Site elevation (meters)': locationData.get(key = 'Site elevation (meters)'),
                                                       'Koppen-Geiger climate classification': locationData.get(key = 'Koppen-Geiger climate classification'),
@@ -586,6 +702,8 @@ class finalOutputFrame:
     
                                                       'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_glassback (C)':average98Cell_open_rack_cell_glassback, 
                                                       'Annual Average (98th Percentile) Module Temperature__open_rack_cell_glassback (C)':average98Module_open_rack_cell_glassback,
+                                                      'Annual Average (2nd Percentile) Cell Temperature__open_rack_cell_glassback (C)':average2ndCell_open_rack_cell_glassback, 
+                                                      'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_glassback (C)':average2ndModule_open_rack_cell_glassback,
                                                       'Annual Minimum Module Temperature__open_rack_cell_glassback (C)':minimum_Module_Temp_open_rack_cell_glassback,
                                                       'Annual Average Module Temperature__open_rack_cell_glassback (C)':average_Module_Temp_open_rack_cell_glassback,
                                                       'Annual Maximum Module Temperature__open_rack_cell_glassback (C)':maximum_Module_Temp_open_rack_cell_glassback,
@@ -594,6 +712,8 @@ class finalOutputFrame:
                                                      
                                                       'Annual Average (98th Percentile) Cell Temperature__roof_mount_cell_glassback (C)':average98Cell_roof_mount_cell_glassback,
                                                       'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)':average98Module_roof_mount_cell_glassback,
+                                                      'Annual Average (2nd Percentile) Cell Temperature__roof_mount_cell_glassback (C)':average2ndCell_roof_mount_cell_glassback,
+                                                      'Annual Average (2nd Percentile) Module Temperature__roof_mount_cell_glassback (C)':average2ndModule_roof_mount_cell_glassback,
                                                       'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)':minimum_Module_Temp_roof_mount_cell_glassback,
                                                       'Annual Average Module Temperature__roof_mount_cell_glassback (C)':average_Module_Temp_roof_mount_cell_glassback,
                                                       'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)':maximum_Module_Temp_roof_mount_cell_glassback,
@@ -602,6 +722,8 @@ class finalOutputFrame:
                                                         
                                                       'Annual Average (98th Percentile) Cell Temperature__open_rack_cell_polymerback (C)':average98CellTemp_open_rack_cell_polymerback,
                                                       'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)':average98Module_open_rack_cell_polymerback,
+                                                      'Annual Average (2nd Percentile) Cell Temperature__open_rack_cell_polymerback (C)':average2ndCellTemp_open_rack_cell_polymerback,
+                                                      'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_polymerback (C)':average2ndModule_open_rack_cell_polymerback,                                                      
                                                       'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)':minimum_Module_Temp_open_rack_cell_polymerback,
                                                       'Annual Average Module Temperature__open_rack_cell_polymerback (C)':average_Module_Temp_open_rack_cell_polymerback,
                                                       'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)':maximum_Module_Temp_open_rack_cell_polymerback,
@@ -610,6 +732,8 @@ class finalOutputFrame:
                                                         
                                                       'Annual Average (98th Percentile) Cell Temperature__insulated_back_polymerback (C)':average98Cell_insulated_back_polymerback,
                                                       'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)':average98Module_insulated_back_polymerback,
+                                                      'Annual Average (2nd Percentile) Cell Temperature__insulated_back_polymerback (C)':average2ndCell_insulated_back_polymerback,
+                                                      'Annual Average (2nd Percentile) Module Temperature__insulated_back_polymerback (C)':average2ndModule_insulated_back_polymerback,                                                      
                                                       'Annual Minimum Module Temperature__insulated_back_polymerback (C)': minimum_Module_Temp_insulated_back_polymerback,
                                                       'Annual Average Module Temperature__insulated_back_polymerback (C)':average_Module_Temp_insulated_back_polymerback,
                                                       'Annual Maximum Module Temperature__insulated_back_polymerback (C)':maximum_Module_Temp_insulated_back_polymerback,
@@ -618,6 +742,8 @@ class finalOutputFrame:
                                                         
                                                       'Annual Average (98th Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)':average98Cell_open_rack_polymer_thinfilm_steel,
                                                       'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)':average98Module_open_rack_polymer_thinfilm_steel,
+                                                      'Annual Average (2nd Percentile) Cell Temperature__open_rack_polymer_thinfilm_steel (C)':average2ndCell_open_rack_polymer_thinfilm_steel,
+                                                      'Annual Average (2nd Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)':average2ndModule_open_rack_polymer_thinfilm_steel,                                                      
                                                       'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)':minimum_Module_Temp_open_rack_polymer_thinfilm_steel,
                                                       'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)':average_Module_Temp_open_rack_polymer_thinfilm_steel,
                                                       'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)':maximum_Module_Temp_open_rack_polymer_thinfilm_steel ,
@@ -626,6 +752,8 @@ class finalOutputFrame:
                                                         
                                                       'Annual Average (98th Percentile) Cell Temperature__22x_concentrator_tracker (C)':average98Cell_22x_concentrator_tracker,
                                                       'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)':average98Module_22x_concentrator_tracker, 
+                                                      'Annual Average (2nd Percentile) Cell Temperature__22x_concentrator_tracker (C)':average2ndCell_22x_concentrator_tracker,
+                                                      'Annual Average (2nd Percentile) Module Temperature__22x_concentrator_tracker (C)':average2ndModule_22x_concentrator_tracker,                                                      
                                                       'Annual Minimum Module Temperature__22x_concentrator_tracker (C)':minimum_Module_Temp_22x_concentrator_tracker,
                                                       'Annual Average Module Temperature__22x_concentrator_tracker (C)':average_Module_Temp_22x_concentrator_tracker,
                                                       'Annual Maximum Module Temperature__22x_concentrator_tracker (C)':maximum_Module_Temp_22x_concentrator_tracker,
@@ -636,11 +764,25 @@ class finalOutputFrame:
                                                    ignore_index=True)             
 
             #Output to the user how many files have been complete
-            wb.sheets[mySheet].range(67,4).value = i + 1
-        # Save summary of all sites as a pickle    
-        finalSummary_df.to_pickle( currentDirectory + '\Pandas_Pickle_DataFrames\Pickle_Level1_Summary\Pickle_Level1_Summary.pickle')
+            
+            if selector == 'fixedTilt':
+                wb.sheets[mySheet].range(67,4).value = i + 1
+            elif selector == 'singleAxisTracker': 
+                wb.sheets[mySheet].range(67,13).value = i + 1 
 
+        # Save the summary file in the appropriate directory, sigle axis tracker or fixed tilt
+        if selector == 'fixedTilt':
+            # Save summary of all sites as a pickle    
+            finalSummary_df.to_pickle( currentDirectory + '\Pandas_Pickle_DataFrames\Pickle_Level1_Summary\Pickle_Level1_Summary.pickle')
+        # Single-Axis Tracker with backtracking capabilities
+        elif selector == 'singleAxisTracker':
+            # Save summary of all sites as a pickle    
+            finalSummary_df.to_pickle( currentDirectory + '\Pandas_Pickle_DataFrames\Pickle_Level1_SingleAxisTracker_Summary\Pickle_Level1_SingleAxisTracker_Summary.pickle')
 
 #currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 #i = 4805
+#selector = 'singleAxisTracker'
+#max_angle = 60
+#gcr = 2/7
 #level1Files = utility.filesNameList( currentDirectory , 'level_1_data' )
+#moduleProcessing_toPickle( currentDirectory , selector , max_angle, gcr)

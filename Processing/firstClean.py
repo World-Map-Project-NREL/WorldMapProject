@@ -118,8 +118,8 @@ class firstClean:
         #level_1_df['Corrected Albedo'] = level_1_df.Albedo.apply(lambda x: 0.133 if x <= 0 or x >= 100 else x)
         
         level_1_df['Corrected Albedo'] = level_1_df['Albedo']
-        level_1_df['Corrected Albedo'].values[level_1_df['Corrected Albedo'].values < 0 ] = 0.133
-        level_1_df['Corrected Albedo'].values[level_1_df['Corrected Albedo'].values > 100 ] = 0.133
+        level_1_df['Corrected Albedo'].values[level_1_df['Corrected Albedo'].values <= 0 ] = 0.133
+        level_1_df['Corrected Albedo'].values[level_1_df['Corrected Albedo'].values >= 100 ] = 0.133
 
         
 #############################################################        

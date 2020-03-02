@@ -177,7 +177,7 @@ def createPickleFiles( currentDirectory ):
     
     
 
-def createLevel_1_Pickles( currentDirectory ): 
+def createLevel_1_Pickles( currentDirectory , selector, max_angle, gcr): 
     '''
     XL Wings FUNCTION
     
@@ -188,8 +188,17 @@ def createLevel_1_Pickles( currentDirectory ):
     directory
     \Pandas_Pickle_DataFrames\Pickle_Level1
     
-    param@ currentDirectory     - String, where the excel file is located 
+    @param currentDirectory     - String, where the excel file is located 
                                        (passed as an argument from EXCEL using UDF)
+    @ param selector             - String, "fixedTilt" : solar module at fixed tile (latitude tilt)
+                                           "singleAxisTracker": solar module with single axis tracker 
+                                                (modules will be facing east/west with axis bar facing north/south)
+    @param max_angle              -int, angle of rotation capability of single axis module
+                                            *90 is standard, 180 will allow full rotation, i.e the panel can filp upside down
+    @param gcr                   -float, Ground Cover Ratio of a single axis-system
+                                         A tracker system with modules 2 meters wide,
+                                         centered on the tracking axis, with 6 meters 
+                                         between the tracking axes has a gcr of 2/6=0.333[3].                                        
     
      @return void               - Will convert dataframes into pickle datafiles  
                     *Note: each location will be saved as its own .pickle file                 
@@ -201,20 +210,41 @@ def createLevel_1_Pickles( currentDirectory ):
     #Reference sheet 0    
     mySheet = myWorkBook.sheets[0]
     ##############
-    myWorkBook.sheets[mySheet].range(64,4).value = "Processing Files"
-    myWorkBook.sheets[mySheet].range(66,4).value = "Files Processed"
-    myWorkBook.sheets[mySheet].range(66,6).value = "Total Files"
+
     #First delete the content of the folder you will be sending the files to.
-    utility.deleteAllFiles( currentDirectory + \
-                              '\\Pandas_Pickle_DataFrames\\Pickle_Level1' )
-    utility.deleteAllFiles( currentDirectory + \
-                        '\\Pandas_Pickle_DataFrames\\Pickle_Level1_Summary')    
-    finalOutputFrame.level_1_df_toPickle( currentDirectory )
+    
+    
+    
+    if selector == 'fixedTilt':
+        
+        myWorkBook.sheets[mySheet].range(64,4).value = "Processing Files"
+        myWorkBook.sheets[mySheet].range(66,4).value = "Files Processed"
+        myWorkBook.sheets[mySheet].range(66,6).value = "Total Files"
+              
+        utility.deleteAllFiles( currentDirectory + \
+                                  '\\Pandas_Pickle_DataFrames\\Pickle_Level1' )
+        utility.deleteAllFiles( currentDirectory + \
+                            '\\Pandas_Pickle_DataFrames\\Pickle_Level1_Summary')
+        
+        
+    elif selector == 'singleAxisTracker':
+        
+        myWorkBook.sheets[mySheet].range(64,13).value = "Processing Files"
+        myWorkBook.sheets[mySheet].range(66,13).value = "Files Processed"
+        myWorkBook.sheets[mySheet].range(66,15).value = "Total Files"        
+        
+        utility.deleteAllFiles( currentDirectory + \
+                        '\\Pandas_Pickle_DataFrames\\Pickle_Level1_SingleAxisTracker' )
+        utility.deleteAllFiles( currentDirectory + \
+                        '\\Pandas_Pickle_DataFrames\\Pickle_Level1_SingleAxisTracker_Summary')
+
+    
+    finalOutputFrame.moduleProcessing_toPickle( currentDirectory , selector , max_angle, gcr)
     # User feedback
     myWorkBook.sheets[mySheet].range(64,4).value = "All Files Sucessfully Saved"
 
 
-def outputFileSummaryPostProcess( currentDirectory ):
+def outputFileSummaryPostProcess( currentDirectory , selector ):
     '''
     XL Wings FUNCTION
     
@@ -223,6 +253,9 @@ def outputFileSummaryPostProcess( currentDirectory ):
     
     @param currentDirectory      - String, where the excel file is located 
                                     (passed as an argument from EXCEL if using UDF) 
+    @ param selector             - String, "fixedTilt" : solar module at fixed tile (latitude tilt)
+                                           "singleAxisTracker": solar module with single axis tracker 
+                                                (modules will be facing east/west with axis bar facing north/south)                               
     @return void                 - Creates a summary csv of all data
     '''    
     #XL Wings
@@ -234,8 +267,13 @@ def outputFileSummaryPostProcess( currentDirectory ):
     ##############
     path = currentDirectory
     # create a summary data frame
-    summary_df = pd.read_pickle( path + '\\Pandas_Pickle_DataFrames\\' + \
-                        'Pickle_Level1_Summary\\Pickle_Level1_Summary.pickle')
+    
+    if selector == 'fixedTilt':
+        summary_df = pd.read_pickle( path + '\\Pandas_Pickle_DataFrames\\' + \
+                            'Pickle_Level1_Summary\\Pickle_Level1_Summary.pickle')
+    elif selector == 'singleAxisTracker':
+        summary_df = pd.read_pickle( path + '\\Pandas_Pickle_DataFrames\\' + \
+                    'Pickle_Level1_SingleAxisTracker_Summary\\Pickle_Level1_SingleAxisTracker_Summary.pickle')
     columnHeaders_list = list(summary_df)  
     myWorkBook.sheets[mySheet].range(10,1).value = columnHeaders_list
     myWorkBook.sheets[mySheet].range(11,1).value = summary_df.values.tolist()

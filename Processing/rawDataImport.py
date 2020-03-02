@@ -246,8 +246,6 @@ class rawDataImport:
                 locationAllData_tuple = ( location_series , csv_df )                
                 
                 
-                
-                
                 with open( path + \
                     '\\Pandas_Pickle_DataFrames\\Pickle_RawData' +'\\'+ 
                     fileNameCSV, 'wb') as f:

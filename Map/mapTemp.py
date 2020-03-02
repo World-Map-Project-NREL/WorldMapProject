@@ -74,6 +74,19 @@ class mapTemp:
             mapScaleUpper = 100
             mapScaleLower = 20
             
+        elif mapSelect == 'open_rack_cell_glassback2nd':
+            moduleType = 'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_glassback (C)'            
+            minTemp = 'Annual Minimum Module Temperature__open_rack_cell_glassback (C)'
+            maxTemp = 'Annual Maximum Module Temperature__open_rack_cell_glassback (C)'
+            avgTemp = 'Annual Average Module Temperature__open_rack_cell_glassback (C)'
+            module98 = 'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_glassback (C)'                        
+            chartHeader = '2nd Percentile Module Temperature Open Rack Cell Glass Back (C)'
+            htmlString = '_open_rack_cell_glassback'
+            colorSelector = 'Spectral6'
+            #Assign the upper and lower bounds of the map 
+            mapScaleUpper = 30
+            mapScaleLower = -10           
+            
         elif mapSelect == 'roof_mount_cell_glassback98th':
             moduleType = 'Annual Average (98th Percentile) Module Temperature__roof_mount_cell_glassback (C)'            
             minTemp = 'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)'
@@ -86,6 +99,19 @@ class mapTemp:
             #Assign the upper and lower bounds of the map 
             mapScaleUpper = 100
             mapScaleLower = 20
+            
+        elif mapSelect == 'roof_mount_cell_glassback2nd':
+            moduleType = 'Annual Average (2nd Percentile) Module Temperature__roof_mount_cell_glassback (C)'            
+            minTemp = 'Annual Minimum Module Temperature__roof_mount_cell_glassback (C)'
+            maxTemp = 'Annual Maximum Module Temperature__roof_mount_cell_glassback (C)'
+            avgTemp = 'Annual Average Module Temperature__roof_mount_cell_glassback (C)'
+            module98 = 'Annual Average (2nd Percentile) Module Temperature__roof_mount_cell_glassback (C)'                        
+            chartHeader = '2nd Percentile Module Temperature Roof Mount Cell Glass Back (C)'
+            htmlString = '_roof_mount_cell_glassback'
+            colorSelector = 'Spectral6'
+            #Assign the upper and lower bounds of the map 
+            mapScaleUpper = 30
+            mapScaleLower = -10            
             
         elif mapSelect == 'open_rack_cell_polymerback98th':
             moduleType = 'Annual Average (98th Percentile) Module Temperature__open_rack_cell_polymerback (C)'            
@@ -100,6 +126,19 @@ class mapTemp:
             mapScaleUpper = 100
             mapScaleLower = 20
             
+        elif mapSelect == 'open_rack_cell_polymerback2nd':
+            moduleType = 'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_polymerback (C)'            
+            minTemp = 'Annual Minimum Module Temperature__open_rack_cell_polymerback (C)'
+            maxTemp = 'Annual Maximum Module Temperature__open_rack_cell_polymerback (C)'
+            avgTemp = 'Annual Average Module Temperature__open_rack_cell_polymerback (C)'
+            module98 = 'Annual Average (2nd Percentile) Module Temperature__open_rack_cell_polymerback (C)'                        
+            chartHeader = '2nd Percentile Module Temperature Open Rack Cell Polymer Back (C)'
+            htmlString = '_open_rack_cell_polymerback'
+            colorSelector = 'Spectral6'
+            #Assign the upper and lower bounds of the map 
+            mapScaleUpper = 30
+            mapScaleLower = -10     
+            
         elif mapSelect == 'insulated_back_polymerback98th':
             moduleType = 'Annual Average (98th Percentile) Module Temperature__insulated_back_polymerback (C)'            
             minTemp = 'Annual Minimum Module Temperature__insulated_back_polymerback (C)'
@@ -113,18 +152,44 @@ class mapTemp:
             mapScaleUpper = 100
             mapScaleLower = 20
             
+        elif mapSelect == 'insulated_back_polymerback2nd':
+            moduleType = 'Annual Average (2nd Percentile) Module Temperature__insulated_back_polymerback (C)'            
+            minTemp = 'Annual Minimum Module Temperature__insulated_back_polymerback (C)'
+            maxTemp = 'Annual Maximum Module Temperature__insulated_back_polymerback (C)'
+            avgTemp = 'Annual Average Module Temperature__insulated_back_polymerback (C)'
+            module98 = 'Annual Average (2nd Percentile) Module Temperature__insulated_back_polymerback (C)'                        
+            chartHeader = '2nd Percentile Module Temperature Insulated Back Polymer Back (C)'
+            htmlString = '_insulated_back_polymerback'
+            colorSelector = 'Spectral6'
+            #Assign the upper and lower bounds of the map 
+            mapScaleUpper = 30
+            mapScaleLower = -10            
+            
         elif mapSelect == 'open_rack_polymer_thinfilm_steel98th':
             moduleType = 'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)'            
             minTemp = 'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)'
             maxTemp = 'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)'
             avgTemp = 'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)'
             module98 = 'Annual Average (98th Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)'        
-            chartHeader = '98th Percentile Module Temperature Open Rack Polymer Thin Film Steel (C)'
+            chartHeader = '20th Percentile Module Temperature Open Rack Polymer Thin Film Steel (C)'
             htmlString = '_open_rack_polymer_thinfilm_steel'
             colorSelector = 'Spectral6' 
             #Assign the upper and lower bounds of the map 
             mapScaleUpper = 100
             mapScaleLower = 20
+            
+        elif mapSelect == 'open_rack_polymer_thinfilm_steel2nd':
+            moduleType = 'Annual Average (2nd Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)'            
+            minTemp = 'Annual Minimum Module Temperature__open_rack_polymer_thinfilm_steel (C)'
+            maxTemp = 'Annual Maximum Module Temperature__open_rack_polymer_thinfilm_steel (C)'
+            avgTemp = 'Annual Average Module Temperature__open_rack_polymer_thinfilm_steel (C)'
+            module98 = 'Annual Average (2nd Percentile) Module Temperature__open_rack_polymer_thinfilm_steel (C)'        
+            chartHeader = '2nd Percentile Module Temperature Open Rack Polymer Thin Film Steel (C)'
+            htmlString = '_open_rack_polymer_thinfilm_steel'
+            colorSelector = 'Spectral6' 
+            #Assign the upper and lower bounds of the map 
+            mapScaleUpper = 30
+            mapScaleLower = -10            
             
         elif mapSelect == '22x_concentrator_tracker98th':
             moduleType = 'Annual Average (98th Percentile) Module Temperature__22x_concentrator_tracker (C)'            
@@ -139,6 +204,18 @@ class mapTemp:
             mapScaleUpper = 100
             mapScaleLower = 20
             
+        elif mapSelect == '22x_concentrator_tracker2nd':
+            moduleType = 'Annual Average (2nd Percentile) Module Temperature__22x_concentrator_tracker (C)'            
+            minTemp = 'Annual Minimum Module Temperature__22x_concentrator_tracker (C)'
+            maxTemp = 'Annual Maximum Module Temperature__22x_concentrator_tracker (C)'
+            avgTemp = 'Annual Average Module Temperature__22x_concentrator_tracker (C)'
+            module98 = 'Annual Average (2nd Percentile) Module Temperature__22x_concentrator_tracker (C)'            
+            chartHeader = '2nd Percentile Module Temperature 22x Concentrator Tracker (C)'
+            htmlString = '_22x_concentrator_tracker'
+            colorSelector = 'Spectral6'
+            #Assign the upper and lower bounds of the map 
+            mapScaleUpper = 30
+            mapScaleLower = -10            
             
         ### Average Temp Maps  
         elif mapSelect == 'AverageModuleTemperature__open_rack_cell_glassback':
@@ -366,15 +443,16 @@ class mapTemp:
     
     
     #TESTING ENVIRONMENT
-#path = r'C:\Users\DHOLSAPP\Desktop\XLWings_ModuleTempTool'
-#mapTemp.outputMapTemp(path , 'open_rack_cell_glassback')
+#path = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
+#mapTemp.outputMapTemp(path , 'roof_mount_cell_glassback2nd')
 #mapSelect = 'open_rack_cell_glassback'
-    
-    
-    
-    
-    
-    
+
+#    'open_rack_cell_glassback2nd'    
+#    'roof_mount_cell_glassback2nd'   
+#    'open_rack_cell_polymerback2nd'
+#    'insulated_back_polymerback2nd'
+#    'open_rack_polymer_thinfilm_steel2nd'
+#    '22x_concentrator_tracker2nd'
     
     
     
