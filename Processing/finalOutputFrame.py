@@ -554,11 +554,11 @@ class finalOutputFrame:
             locationData = locationData.append( dataSource )
             # add if we are doing single-axis tracer or fixed tilt.
             if selector == 'fixedTilt':
-                moduleType = pd.Series( 'Fixed Tilt', index=['Module Type'])
+                moduleType = pd.Series( 'Fixed Tilt (Latitude Tilt) '+ str(surface_tilt) + ' (degrees)' , index=['Module Type'])
                 locationData = locationData.append( moduleType )
             # Single-Axis Tracker with backtracking capabilities
             elif selector == 'singleAxisTracker':
-                moduleType = pd.Series( 'Single-Axis Tracker (Back Tracking)', index=['Module Type'])
+                moduleType = pd.Series( 'Single-Axis Tracker (Back Tracking), gcr=' + str(gcr) + ', Max Angle=' + str(max_angle) , index=['Module Type'])
                 locationData = locationData.append( moduleType )            
             
 
@@ -781,6 +781,8 @@ class finalOutputFrame:
 
 #currentDirectory = r'C:\Users\DHOLSAPP\Desktop\WorldMapProject\WorldMapProject'
 #i = 4805
+#fixedTilt
+#singleAxisTracker
 #selector = 'singleAxisTracker'
 #max_angle = 60
 #gcr = 2/7
